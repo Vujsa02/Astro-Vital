@@ -1,0 +1,43 @@
+package hypoxia
+
+import com.ftn.sbnz.model.models.Environment
+import com.ftn.sbnz.model.models.Vitals
+import com.ftn.sbnz.model.models.CrewSymptoms
+import com.ftn.sbnz.model.models.VentilationStatus
+import com.ftn.sbnz.model.models.Finding
+
+global java.util.List findings
+
+// Rule 1: Risk of hypoxia
+rule "Risk of hypoxia"
+when
+    Environment( o2Level < 19.5 ) 
+    or Environment( co2Level > 1000 )
+    not Finding( type == "Risk of hypoxia" )
+then
+    insert( new Finding("Risk of hypoxia") );
+end
+
+// Rule 2: Hypoxia confirmed
+rule "Hypoxia confirmed"
+when
+    Finding( type == "Risk of hypoxia" )
+    and (
+        Vitals( spo2 < 90 )
+        or CrewSymptoms( shortnessOfBreath == true )
+        or CrewSymptoms( dizziness == true )
+    )
+    not Finding( type == "Hypoxia confirmed" )
+then
+    insert( new Finding("Hypoxia confirmed") );
+end
+
+// Rule 3: Cause is poor ventilation
+rule "Cause of hypoxia: ventilation degraded"
+when
+    Finding( type == "Hypoxia confirmed" )
+    and VentilationStatus( degraded == true )
+    not Finding( type == "Cause of hypoxia: poor ventilation" )
+then
+    insert( new Finding("Cause of hypoxia: poor ventilation") );
+end
