@@ -1,4 +1,4 @@
-package hypoxia
+package healthmonitoring
 
 import com.ftn.sbnz.model.models.Environment
 import com.ftn.sbnz.model.models.Vitals
@@ -7,6 +7,8 @@ import com.ftn.sbnz.model.models.VentilationStatus
 import com.ftn.sbnz.model.models.Finding
 
 global java.util.List findings
+
+//HYPOXIA DETECTION RULES
 
 // Rule 1: Risk of hypoxia
 rule "Risk of hypoxia"
@@ -40,4 +42,26 @@ when
     not Finding( type == "Cause of hypoxia: poor ventilation" )
 then
     insert( new Finding("Cause of hypoxia: poor ventilation") );
+end
+
+// === CHEMICAL AIR QUALITY RULES ===
+
+// Rule 4: Chemical irritants present
+rule "Chemical irritants present"
+when
+    Environment( coLevel > 35 )  // CO elevated (35 ppm is NIOSH 8-hour limit)
+    and CrewSymptoms( eyeIrritation == true )
+    not Finding( type == "Chemical irritants present" )
+then
+    insert( new Finding("Chemical irritants present") );
+end
+
+// Rule 5: Dangerous air quality in module
+rule "Dangerous air quality in module"
+when
+    Finding( type == "Chemical irritants present" )
+    and VentilationStatus( degraded == true )
+    not Finding( type == "Dangerous air quality in module" )
+then
+    insert( new Finding("Dangerous air quality in module") );
 end

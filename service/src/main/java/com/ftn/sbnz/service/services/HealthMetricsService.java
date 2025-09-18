@@ -12,16 +12,16 @@ import java.util.Collection;
 import java.util.List;
 
 @Service
-public class HypoxiaService {
+public class HealthMetricsService {
 
   private final KieContainer kieContainer;
 
   @Autowired
-  public HypoxiaService(KieContainer kieContainer) {
+  public HealthMetricsService(KieContainer kieContainer) {
     this.kieContainer = kieContainer;
   }
 
-  public List<Finding> checkHypoxia(Environment env, Vitals vitals,
+  public List<Finding> checkHealthMetrics(Environment env, Vitals vitals,
       CrewSymptoms symptoms, VentilationStatus ventilation) {
     KieSession kieSession = kieContainer.newKieSession();
 
@@ -29,13 +29,15 @@ public class HypoxiaService {
     List<Finding> findings = new ArrayList<>();
     kieSession.setGlobal("findings", findings);
 
-    // Insert facts
+    // Insert facts for health monitoring rules
     kieSession.insert(env);
     kieSession.insert(vitals);
     kieSession.insert(symptoms);
     kieSession.insert(ventilation);
 
-    kieSession.fireAllRules();
+    // Fire all rules (both hypoxia and chemical air quality)
+    int rulesFired = kieSession.fireAllRules();
+    System.out.println("Health Metrics: Fired " + rulesFired + " rules");
 
     // Gather findings inserted by rules
     Collection<?> inserted = kieSession.getObjects(o -> o instanceof Finding);

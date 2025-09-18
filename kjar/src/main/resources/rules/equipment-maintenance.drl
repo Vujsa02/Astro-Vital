@@ -1,0 +1,22 @@
+package equipmentmaintenance
+
+import com.ftn.sbnz.model.models.Environment
+import com.ftn.sbnz.model.models.VentilationStatus
+import com.ftn.sbnz.model.models.AirFilter
+
+
+rule "Ventilation service required"
+when
+    VentilationStatus( degraded == true )
+    and Environment( co2Level > 1000 )
+then
+    System.out.println("Ventilation service required due to degraded ventilation and high CO2 levels");
+end
+
+rule "Air filter replacement required"
+when
+    AirFilter( dirty == true )
+    and Environment( co2Level > 1000 )
+then
+    System.out.println("Air filter replacement required due to dirty filter and high CO2 levels");
+end

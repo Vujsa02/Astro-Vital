@@ -2,21 +2,19 @@ package com.ftn.sbnz.model.dtos;
 
 import com.ftn.sbnz.model.models.*;
 
-public class HypoxiaRequest {
+public class EquipmentMaintenanceRequest {
   private Environment environment;
-  private Vitals vitals;
-  private CrewSymptoms crewSymptoms;
   private VentilationStatus ventilationStatus;
+  private AirFilter airFilter;
 
-  public HypoxiaRequest() {
+  public EquipmentMaintenanceRequest() {
   }
 
-  public HypoxiaRequest(Environment environment, Vitals vitals,
-      CrewSymptoms crewSymptoms, VentilationStatus ventilationStatus) {
+  public EquipmentMaintenanceRequest(Environment environment, VentilationStatus ventilationStatus,
+      AirFilter airFilter) {
     this.environment = environment;
-    this.vitals = vitals;
-    this.crewSymptoms = crewSymptoms;
     this.ventilationStatus = ventilationStatus;
+    this.airFilter = airFilter;
   }
 
   public Environment getEnvironment() {
@@ -27,27 +25,19 @@ public class HypoxiaRequest {
     this.environment = environment;
   }
 
-  public Vitals getVitals() {
-    return vitals;
-  }
-
-  public void setVitals(Vitals vitals) {
-    this.vitals = vitals;
-  }
-
-  public CrewSymptoms getCrewSymptoms() {
-    return crewSymptoms;
-  }
-
-  public void setCrewSymptoms(CrewSymptoms crewSymptoms) {
-    this.crewSymptoms = crewSymptoms;
-  }
-
   public VentilationStatus getVentilationStatus() {
     return ventilationStatus;
   }
 
   public void setVentilationStatus(VentilationStatus ventilationStatus) {
     this.ventilationStatus = ventilationStatus;
+  }
+
+  public AirFilter getAirFilter() {
+    return airFilter;
+  }
+
+  public void setAirFilter(AirFilter airFilter) {
+    this.airFilter = airFilter;
   }
 }
