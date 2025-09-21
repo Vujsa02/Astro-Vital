@@ -1,43 +1,44 @@
 package com.ftn.sbnz.model.dtos;
 
 import com.ftn.sbnz.model.models.*;
+import java.util.List;
 
 public class EquipmentMaintenanceRequest {
-  private Environment environment;
-  private VentilationStatus ventilationStatus;
-  private AirFilter airFilter;
+  private List<Environment> environments;
+  private List<VentilationStatus> ventilationStatusList;
+  private List<AirFilter> airFilterList;
 
   public EquipmentMaintenanceRequest() {
   }
 
-  public EquipmentMaintenanceRequest(Environment environment, VentilationStatus ventilationStatus,
-      AirFilter airFilter) {
-    this.environment = environment;
-    this.ventilationStatus = ventilationStatus;
-    this.airFilter = airFilter;
+  public EquipmentMaintenanceRequest(List<Environment> environments, List<VentilationStatus> ventilationStatusList,
+      List<AirFilter> airFilterList) {
+    this.environments = environments;
+    this.ventilationStatusList = ventilationStatusList;
+    this.airFilterList = airFilterList;
   }
 
-  public Environment getEnvironment() {
-    return environment;
+  public List<Environment> getEnvironments() {
+    return environments;
   }
 
-  public void setEnvironment(Environment environment) {
-    this.environment = environment;
+  public void setEnvironments(List<Environment> environments) {
+    this.environments = environments;
   }
 
-  public VentilationStatus getVentilationStatus() {
-    return ventilationStatus;
+  public List<VentilationStatus> getVentilationStatusList() {
+    return ventilationStatusList;
   }
 
-  public void setVentilationStatus(VentilationStatus ventilationStatus) {
-    this.ventilationStatus = ventilationStatus;
+  public void setVentilationStatusList(List<VentilationStatus> ventilationStatusList) {
+    this.ventilationStatusList = ventilationStatusList;
   }
 
-  public AirFilter getAirFilter() {
-    return airFilter;
+  public List<AirFilter> getAirFilterList() {
+    return airFilterList;
   }
 
-  public void setAirFilter(AirFilter airFilter) {
-    this.airFilter = airFilter;
+  public void setAirFilterList(List<AirFilter> airFilterList) {
+    this.airFilterList = airFilterList;
   }
 }

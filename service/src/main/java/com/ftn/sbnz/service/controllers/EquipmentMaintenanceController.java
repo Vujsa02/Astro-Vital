@@ -1,6 +1,7 @@
 package com.ftn.sbnz.service.controllers;
 
 import com.ftn.sbnz.model.dtos.*;
+import com.ftn.sbnz.model.models.Finding;
 import com.ftn.sbnz.service.services.EquipmentMaintenanceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -19,10 +20,10 @@ public class EquipmentMaintenanceController {
   }
 
   @PostMapping("/check")
-  public List<String> checkMaintenanceNeeds(@RequestBody EquipmentMaintenanceRequest request) {
+  public List<Finding> checkMaintenanceNeeds(@RequestBody EquipmentMaintenanceRequest request) {
     return equipmentMaintenanceService.checkMaintenanceNeeds(
-        request.getEnvironment(),
-        request.getVentilationStatus(),
-        request.getAirFilter());
+        request.getEnvironments(),
+        request.getVentilationStatusList(),
+        request.getAirFilterList());
   }
 }

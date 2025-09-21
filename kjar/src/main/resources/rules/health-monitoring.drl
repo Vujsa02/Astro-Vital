@@ -5,43 +5,51 @@ import com.ftn.sbnz.model.models.Vitals
 import com.ftn.sbnz.model.models.CrewSymptoms
 import com.ftn.sbnz.model.models.VentilationStatus
 import com.ftn.sbnz.model.models.Finding
+import com.ftn.sbnz.service.services.NotificationService
+import com.ftn.sbnz.service.services.FindingsService
 
-global java.util.List findings
+global NotificationService notificationService
+global FindingsService findingsService
 
 //HYPOXIA DETECTION RULES
 
 // Rule 1: Risk of hypoxia
 rule "Risk of hypoxia"
 when
-    Environment( o2Level < 19.5 ) 
-    or Environment( co2Level > 1000 )
-    not Finding( type == "Risk of hypoxia" )
+    eval(!findingsService.hasActiveFinding($moduleId, "Risk of hypoxia"))
+    $env: Environment( o2Level < 19.5 || co2Level > 1000, $moduleId : moduleID )
 then
-    insert( new Finding("Risk of hypoxia") );
+    Finding finding = new Finding("Risk of hypoxia", $moduleId, 
+        "Environmental risk detected in module " + $moduleId, "HIGH");
+    insert(finding);
 end
 
 // Rule 2: Hypoxia confirmed
 rule "Hypoxia confirmed"
 when
-    Finding( type == "Risk of hypoxia" )
+    eval(!findingsService.hasActiveFinding($moduleId, "Hypoxia confirmed"))
+    Finding( type == "Risk of hypoxia", $moduleId : moduleId )
     and (
-        Vitals( spo2 < 90 )
-        or CrewSymptoms( shortnessOfBreath == true )
-        or CrewSymptoms( dizziness == true )
+        Vitals( moduleId == $moduleId, spo2 < 90 )
+        or CrewSymptoms( moduleId == $moduleId, shortnessOfBreath == true )
+        or CrewSymptoms( moduleId == $moduleId, dizziness == true )
     )
-    not Finding( type == "Hypoxia confirmed" )
 then
-    insert( new Finding("Hypoxia confirmed") );
+    Finding finding = new Finding("Hypoxia confirmed", $moduleId,
+        "Hypoxia confirmed with symptoms in module " + $moduleId, "CRITICAL");
+    insert(finding);
 end
 
 // Rule 3: Cause is poor ventilation
 rule "Cause of hypoxia: ventilation degraded"
 when
-    Finding( type == "Hypoxia confirmed" )
-    and VentilationStatus( degraded == true )
-    not Finding( type == "Cause of hypoxia: poor ventilation" )
+    eval(!findingsService.hasActiveFinding($moduleId, "Cause of hypoxia: poor ventilation"))
+    Finding( type == "Hypoxia confirmed", $moduleId : moduleId )
+    VentilationStatus( moduleID == $moduleId, degraded == true )
 then
-    insert( new Finding("Cause of hypoxia: poor ventilation") );
+    Finding finding = new Finding("Cause of hypoxia: poor ventilation", $moduleId,
+        "Poor ventilation causing hypoxia in module " + $moduleId, "HIGH");
+    insert(finding);
 end
 
 // === CHEMICAL AIR QUALITY RULES ===
@@ -49,19 +57,41 @@ end
 // Rule 4: Chemical irritants present
 rule "Chemical irritants present"
 when
-    Environment( coLevel > 35 )  // CO elevated (35 ppm is NIOSH 8-hour limit)
-    and CrewSymptoms( eyeIrritation == true )
-    not Finding( type == "Chemical irritants present" )
+    eval(!findingsService.hasActiveFinding($moduleId, "Chemical irritants present"))
+    $env: Environment( coLevel > 35, $moduleId : moduleID )  // CO elevated (35 ppm is NIOSH 8-hour limit)
+    CrewSymptoms( moduleId == $moduleId, eyeIrritation == true )
 then
-    insert( new Finding("Chemical irritants present") );
+    Finding finding = new Finding("Chemical irritants present", $moduleId,
+        "Chemical irritants detected in module " + $moduleId, "MEDIUM");
+    insert(finding);
 end
 
 // Rule 5: Dangerous air quality in module
 rule "Dangerous air quality in module"
 when
-    Finding( type == "Chemical irritants present" )
-    and VentilationStatus( degraded == true )
-    not Finding( type == "Dangerous air quality in module" )
+    eval(!findingsService.hasActiveFinding($moduleId, "Dangerous air quality in module"))
+    Finding( type == "Chemical irritants present", $moduleId : moduleId )
+    VentilationStatus( moduleID == $moduleId, degraded == true )
 then
-    insert( new Finding("Dangerous air quality in module") );
+    Finding finding = new Finding("Dangerous air quality in module", $moduleId,
+        "Dangerous air quality detected in module " + $moduleId, "HIGH");
+    insert(finding);
+end
+
+rule "Send notification for new findings"
+    salience 500
+when
+    $finding : Finding( notified == false )
+then
+    notificationService.sendNotification($finding.getType(), "HEALTH_MONITORING", 
+        $finding.getDetails(), $finding.getPriority());
+    modify($finding) { setNotified(true) }
+end
+
+rule "Persist findings to global store"
+    salience 400
+when
+    $finding : Finding( notified == true, $moduleId : moduleId )
+then
+    findingsService.addFindings($moduleId, java.util.Arrays.asList($finding));
 end

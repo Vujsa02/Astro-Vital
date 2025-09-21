@@ -3,20 +3,51 @@ package equipmentmaintenance
 import com.ftn.sbnz.model.models.Environment
 import com.ftn.sbnz.model.models.VentilationStatus
 import com.ftn.sbnz.model.models.AirFilter
+import com.ftn.sbnz.model.models.Finding
+import com.ftn.sbnz.service.services.NotificationService
+import com.ftn.sbnz.service.services.FindingsService
 
+global NotificationService notificationService
+global FindingsService findingsService
 
 rule "Ventilation service required"
 when
-    VentilationStatus( degraded == true )
-    and Environment( co2Level > 1000 )
+    $env: Environment( co2Level > 1000, $moduleId : moduleID )
+    VentilationStatus( moduleID == $moduleId, degraded == true )
+    // Check if this finding already exists in the global store for this specific module
+    eval(!findingsService.hasActiveFinding($moduleId, "Ventilation service required"))
 then
-    System.out.println("Ventilation service required due to degraded ventilation and high CO2 levels");
+    Finding finding = new Finding("Ventilation service required", $moduleId, 
+        "Degraded ventilation with CO2 > 1000 ppm in module " + $moduleId, "HIGH");
+    insert(finding);
 end
 
 rule "Air filter replacement required"
 when
-    AirFilter( dirty == true )
-    and Environment( co2Level > 1000 )
+    $env: Environment( co2Level > 1000, $moduleId : moduleID )
+    AirFilter( moduleID == $moduleId, dirty == true )
+    // Check if this finding already exists in the global store for this specific module
+    eval(!findingsService.hasActiveFinding($moduleId, "Air filter replacement required"))
 then
-    System.out.println("Air filter replacement required due to dirty filter and high CO2 levels");
+    Finding finding = new Finding("Air filter replacement required", $moduleId,
+        "Dirty air filter with CO2 > 1000 ppm in module " + $moduleId, "MEDIUM");
+    insert(finding);
+end
+
+rule "Send notification for new findings"
+    salience 500
+when
+    $finding : Finding( notified == false )
+then
+    notificationService.sendNotification($finding.getType(), "EQUIPMENT_MAINTENANCE", 
+        $finding.getDetails(), $finding.getPriority());
+    modify($finding) { setNotified(true) }
+end
+
+rule "Persist findings to global store"
+    salience 400
+when
+    $finding : Finding( notified == true, $moduleId : moduleId )
+then
+    findingsService.addFindings($moduleId, java.util.Arrays.asList($finding));
 end

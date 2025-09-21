@@ -12,6 +12,9 @@ public class MoistureInvestigation {
     private String result;
     private String evidence;
 
+    // Cleanup management fields
+    private long completionTimestamp;
+
     public MoistureInvestigation() {
         this.testedModules = new ArrayList<>();
         this.investigationComplete = false;
@@ -83,6 +86,14 @@ public class MoistureInvestigation {
 
     public void setEvidence(String evidence) {
         this.evidence = evidence;
+    }
+
+    public long getCompletionTimestamp() {
+        return completionTimestamp;
+    }
+
+    public void setCompletionTimestamp(long completionTimestamp) {
+        this.completionTimestamp = completionTimestamp;
     }
 
     @Override

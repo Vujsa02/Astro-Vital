@@ -15,31 +15,40 @@ import java.util.List;
 public class HealthMetricsService {
 
   private final KieContainer kieContainer;
+  private final NotificationService notificationService;
+  private final FindingsService findingsService;
 
   @Autowired
-  public HealthMetricsService(KieContainer kieContainer) {
+  public HealthMetricsService(KieContainer kieContainer, NotificationService notificationService,
+      FindingsService findingsService) {
     this.kieContainer = kieContainer;
+    this.notificationService = notificationService;
+    this.findingsService = findingsService;
   }
 
-  public List<Finding> checkHealthMetrics(Environment env, Vitals vitals,
-      CrewSymptoms symptoms, VentilationStatus ventilation) {
-    KieSession kieSession = kieContainer.newKieSession();
+  public synchronized List<Finding> checkHealthMetrics(List<Environment> environments, List<Vitals> vitalsList,
+      List<CrewSymptoms> symptomsList, List<VentilationStatus> ventilationList) {
+    KieSession kieSession = kieContainer.newKieSession("health-session");
 
-    // Collect Findings into a list so we can return them
-    List<Finding> findings = new ArrayList<>();
-    kieSession.setGlobal("findings", findings);
+    // Clean up expired findings for all modules before processing
+    findingsService.cleanupAllExpiredFindings();
 
-    // Insert facts for health monitoring rules
-    kieSession.insert(env);
-    kieSession.insert(vitals);
-    kieSession.insert(symptoms);
-    kieSession.insert(ventilation);
+    // Set globals
+    kieSession.setGlobal("notificationService", notificationService);
+    kieSession.setGlobal("findingsService", findingsService);
+
+    // Insert all environment facts
+    environments.forEach(kieSession::insert);
+    vitalsList.forEach(kieSession::insert);
+    symptomsList.forEach(kieSession::insert);
+    ventilationList.forEach(kieSession::insert);
 
     // Fire all rules (both hypoxia and chemical air quality)
     int rulesFired = kieSession.fireAllRules();
     System.out.println("Health Metrics: Fired " + rulesFired + " rules");
 
     // Gather findings inserted by rules
+    List<Finding> findings = new ArrayList<>();
     Collection<?> inserted = kieSession.getObjects(o -> o instanceof Finding);
     for (Object obj : inserted) {
       findings.add((Finding) obj);

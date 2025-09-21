@@ -8,45 +8,56 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 @Service
 public class EquipmentMaintenanceService {
 
   private final KieContainer kieContainer;
+  private final NotificationService notificationService;
+  private final FindingsService findingsService;
 
   @Autowired
-  public EquipmentMaintenanceService(KieContainer kieContainer) {
+  public EquipmentMaintenanceService(KieContainer kieContainer, NotificationService notificationService,
+      FindingsService findingsService) {
     this.kieContainer = kieContainer;
+    this.notificationService = notificationService;
+    this.findingsService = findingsService;
   }
 
-  public List<String> checkMaintenanceNeeds(Environment env, VentilationStatus ventilation, AirFilter airFilter) {
-    KieSession kieSession = kieContainer.newKieSession();
+  public synchronized List<Finding> checkMaintenanceNeeds(List<Environment> environments,
+      List<VentilationStatus> ventilationList,
+      List<AirFilter> airFilterList) {
 
-    // Collect maintenance actions
-    List<String> maintenanceActions = new ArrayList<>();
+    // Clean up expired findings from global store first
+    findingsService.cleanupAllExpiredFindings();
 
-    // Insert facts for equipment maintenance rules
-    kieSession.insert(env);
-    kieSession.insert(ventilation);
-    kieSession.insert(airFilter);
+    KieSession kieSession = kieContainer.newKieSession("equipment-session");
 
-    // Fire equipment maintenance rules
+    // Set the global notification service
+    kieSession.setGlobal("notificationService", notificationService);
+
+    // Set the global findings service so rules can persist findings
+    kieSession.setGlobal("findingsService", findingsService);
+
+    // Insert all facts
+    environments.forEach(kieSession::insert);
+    ventilationList.forEach(kieSession::insert);
+    airFilterList.forEach(kieSession::insert);
+
+    // Fire all rules
     int rulesFired = kieSession.fireAllRules();
     System.out.println("Equipment Maintenance: Fired " + rulesFired + " rules");
 
-    // Since equipment rules use System.out.println, we'll return a summary
-    // In a real implementation, you might want to create specific maintenance
-    // findings
-    if (ventilation.isDegraded() && env.getCo2Level() > 1000) {
-      maintenanceActions.add("Ventilation service required due to degraded ventilation and high CO2 levels");
-    }
-
-    if (airFilter.isDirty() && env.getCo2Level() > 1000) {
-      maintenanceActions.add("Air filter replacement required due to dirty filter and high CO2 levels");
+    // Collect findings
+    List<Finding> findings = new ArrayList<>();
+    Collection<?> objects = kieSession.getObjects(o -> o instanceof Finding && !((Finding) o).isExpired());
+    for (Object obj : objects) {
+      findings.add((Finding) obj);
     }
 
     kieSession.dispose();
-    return maintenanceActions;
+    return findings;
   }
 }

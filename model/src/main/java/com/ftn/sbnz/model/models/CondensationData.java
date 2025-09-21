@@ -11,17 +11,17 @@ public class CondensationData {
     public CondensationData() {
     }
 
-    public CondensationData(String moduleID, boolean condensationActive, String location, double surfaceTemperature) {
+    public CondensationData(String moduleID, String location, double surfaceTemperature) {
         this.moduleID = moduleID;
-        this.condensationActive = condensationActive;
+        this.condensationActive = false;
         this.location = CondensationLocation.fromString(location);
         this.surfaceTemperature = surfaceTemperature;
     }
 
-    public CondensationData(String moduleID, boolean condensationActive, CondensationLocation location,
+    public CondensationData(String moduleID, CondensationLocation location,
             double surfaceTemperature) {
         this.moduleID = moduleID;
-        this.condensationActive = condensationActive;
+        this.condensationActive = false;
         this.location = location;
         this.surfaceTemperature = surfaceTemperature;
     }

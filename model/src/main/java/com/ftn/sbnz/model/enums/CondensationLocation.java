@@ -3,9 +3,7 @@ package com.ftn.sbnz.model.enums;
 public enum CondensationLocation {
     WATER_LINES("water_lines"),
     PANELS("panels"),
-    WALLS("walls"),
-    EQUIPMENT("equipment"),
-    GENERAL("general");
+    WALLS("walls");
 
     private final String value;
 

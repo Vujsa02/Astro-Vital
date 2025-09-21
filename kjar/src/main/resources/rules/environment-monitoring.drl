@@ -1,165 +1,213 @@
-package rules;
+package environmentalmonitoring;
 
 import com.ftn.sbnz.model.models.Environment;
 import com.ftn.sbnz.model.models.CondensationData;
+import com.ftn.sbnz.model.models.Finding;
 import com.ftn.sbnz.model.enums.CondensationLocation;
-import com.ftn.sbnz.model.models.WaterRecycling;
-import com.ftn.sbnz.model.models.VentilationStatus;
-import com.ftn.sbnz.model.enums.Module;
-import com.ftn.sbnz.model.models.MoistureInvestigation;
+import com.ftn.sbnz.model.events.HumidityEvent;
 
-// Query to get investigation result
-query "findMoistureSource"
-    MoistureInvestigation(investigationComplete == true, $result : result, $evidence : evidence)
+global com.ftn.sbnz.service.services.NotificationService notificationService;
+global com.ftn.sbnz.service.services.InvestigationService investigationService;
+global com.ftn.sbnz.service.services.FindingsService findingsService;
+
+// Declare HumidityEvent as an event type for CEP
+declare HumidityEvent
+    @role( event )
+    @timestamp( timestamp )
+    @expires( 7h ) 
 end
 
-rule "Start Moisture Investigation"
-    salience 1000
-    when
-        not MoistureInvestigation()
-    then
-        MoistureInvestigation investigation = new MoistureInvestigation(Module.COMMAND.getId());
-        insert(investigation);
-        System.out.println("Starting moisture investigation systematically from module: " + Module.COMMAND.getId());
+// CEP Rule: Sliding 6-hour window for humidity trend detection
+rule "Condensation detection - 6 hour sliding humidity trend - update existing WALLS"
+    salience 1200  // High priority - detect condensation first
+when
+    // Most recent humidity reading (within last 5 minutes)
+    $recent: HumidityEvent($moduleId: moduleId, $recentHumidity: humidity)
+    not HumidityEvent(moduleId == $moduleId, timestamp > $recent.timestamp)
+    
+    // Oldest humidity reading in the 6-hour window (5h55m to 6h5m ago)
+    $oldest: HumidityEvent(
+        moduleId == $moduleId,
+        $oldestHumidity: humidity,
+        this before[5h55m,6h5m] $recent  // 6-hour window with 5min tolerance
+    )
+    
+    // Ensure this is the oldest in the window
+    not HumidityEvent(
+        moduleId == $moduleId,
+        timestamp < $oldest.timestamp,
+        this before[5h55m,6h5m] $recent
+    )
+    
+    // Check for significant humidity increase (at least 10%)
+    eval($recentHumidity > ($oldestHumidity + 10))
+    
+    // Current environment conditions - temperature close to dew point
+    $env: Environment(
+        moduleID == $moduleId,
+        $dewPoint: dewPoint,
+    )
+    
+    // Existing WALLS condensation data to update
+    $wallCondensation: CondensationData(
+        moduleID == $moduleId, 
+        locationEnum == CondensationLocation.WALLS,
+        $surfaceTemp: surfaceTemperature,
+        condensationActive == false,
+        // Surface temperature is below dew point (condensation threshold)
+        eval($surfaceTemp < $dewPoint)
+    )
+    
+    // Check if condensation finding already exists for this module and location
+    eval(!findingsService.hasActiveFinding($moduleId, "Condensation detected on WALLS"))
+    
+then
+    modify($wallCondensation) {
+        setCondensationActive(true);
+    }
+    // Create finding for this condensation detection
+    Finding wallsFinding = new Finding("Condensation detected on WALLS", $moduleId, 
+        "6-hour humidity increase from " + $oldestHumidity + "% to " + $recentHumidity + "% with surface temp " + $surfaceTemp + "°C below dew point " + $dewPoint + "°C", "HIGH");
+    insert(wallsFinding);
 end
 
-// ============================================================================
-// H1: WATER RECYCLING/LEAKAGE HYPOTHESIS
-// ============================================================================
+// Alternative: Use collect for more robust window analysis
+rule "Condensation detection - 6 hour collect pattern - update existing PANELS"
+    salience 1200  // High priority - detect condensation first
+when
+    // Most recent humidity reading (within last 5 minutes)
+    $recent: HumidityEvent($moduleId: moduleId, $recentHumidity: humidity)
+    not HumidityEvent(moduleId == $moduleId, timestamp > $recent.timestamp)
+    
+    // Oldest humidity reading in the 6-hour window (5h55m to 6h5m ago)
+    $oldest: HumidityEvent(
+        moduleId == $moduleId,
+        $oldestHumidity: humidity,
+        this before[5h55m,6h5m] $recent  // 6-hour window with 5min tolerance
+    )
+    
+    // Ensure this is the oldest in the window
+    not HumidityEvent(
+        moduleId == $moduleId,
+        timestamp < $oldest.timestamp,
+        this before[5h55m,6h5m] $recent
+    )
+    
+    // Check for significant humidity increase (at least 10%)
+    eval($recentHumidity > ($oldestHumidity + 10))
+    
+    // Environment and condensation conditions...
+    $env: Environment(
+        moduleID == $moduleId,
+        $dewPoint: dewPoint
+    )
+    
+    $panelCondensation: CondensationData(
+        moduleID == $moduleId, 
+        locationEnum == CondensationLocation.PANELS,
+        $surfaceTemp: surfaceTemperature,
+        condensationActive == false,
+        // Surface temperature is below dew point (condensation threshold)
+        eval($surfaceTemp < $dewPoint)
+    )
+    
+    // Check if condensation finding already exists for this module and location
+    eval(!findingsService.hasActiveFinding($moduleId, "Condensation detected on PANELS"))
+    
+then
+    modify($panelCondensation) {
+        setCondensationActive(true);
+    }
+    // Create finding for this condensation detection
+    Finding panelsFinding = new Finding("Condensation detected on PANELS", $moduleId, 
+        "6-hour humidity increase from " + $oldestHumidity + "% to " + $recentHumidity + "% with surface temp " + $surfaceTemp + "°C below dew point " + $dewPoint + "°C", "HIGH");
+    insert(panelsFinding);
+end
 
-rule "H1 - Water Recycling Source Found"
-    salience 900
+// Water lines condensation detection based on surface temperature vs dew point
+rule "Condensation detection - Water lines temperature check"
+    salience 1200  // High priority - detect condensation first
+when
+ $recent: HumidityEvent($moduleId: moduleId, $recentHumidity: humidity)
+    not HumidityEvent(moduleId == $moduleId, timestamp > $recent.timestamp)
+    
+    $oldest: HumidityEvent(
+        moduleId == $moduleId,
+        $oldestHumidity: humidity,
+        this before[5h55m,6h5m] $recent  // 6-hour window with 5min tolerance
+    )
+    
+    not HumidityEvent(
+        moduleId == $moduleId,
+        timestamp < $oldest.timestamp,
+        this before[5h55m,6h5m] $recent
+    )
+    
+    eval($recentHumidity > ($oldestHumidity + 10))
+
+    $env: Environment(
+        $moduleId: moduleID,
+        $dewPoint: dewPoint
+    )
+    
+    $waterCondensation: CondensationData(
+        moduleID == $moduleId, 
+        locationEnum == CondensationLocation.WATER_LINES,
+        $surfaceTemp: surfaceTemperature,
+        condensationActive == false,
+        // Surface temperature is below dew point (condensation threshold)
+        eval($surfaceTemp < $dewPoint)
+    )
+    
+    // Check if condensation finding already exists for this module and location
+    eval(!findingsService.hasActiveFinding($moduleId, "Condensation detected on WATER_LINES"))
+    
+then
+    modify($waterCondensation) {
+        setCondensationActive(true);
+    }
+    // Create finding for this condensation detection
+    Finding waterlinesFinding = new Finding("Condensation detected on WATER_LINES", $moduleId, 
+        "Surface temperature " + $surfaceTemp + "°C below dew point " + $dewPoint + "°C (difference: " + ($dewPoint - $surfaceTemp) + "°C)", "HIGH");
+    insert(waterlinesFinding);
+end
+
+// Trigger moisture investigation when condensation is detected on critical surfaces
+rule "Trigger Moisture Investigation - Condensation Detected"
+    salience 500  // Lower priority - runs AFTER all condensation detection rules
     when
-        $investigation : MoistureInvestigation(
-            investigationComplete == false,
-            $moduleId : currentModuleID
-        )
-        WaterRecycling(moduleID == $moduleId, degraded == true)
-        $condensation : CondensationData(
-            moduleID == $moduleId, 
+        // Check for active condensation on critical surfaces
+        CondensationData(
             condensationActive == true,
-            locationEnum == CondensationLocation.WATER_LINES,
-            $surfaceTemp : surfaceTemperature
+            (locationEnum == CondensationLocation.PANELS || 
+             locationEnum == CondensationLocation.WALLS || 
+             locationEnum == CondensationLocation.WATER_LINES),
+            $moduleId : moduleID
         )
+        // Check if finding already exists in global store for this module
+        eval(!findingsService.hasActiveFinding($moduleId, "Investigation Required"))
     then
-        modify($investigation) {
-            setInvestigationComplete(true),
-            setSourceFound(true),
-            setConfirmedHypothesis("H1"),
-            setResult("Moisture source FOUND: H1 (Water Recycling/Leakage) in module " + $moduleId),
-            setEvidence("Water recycling degraded + condensation on water lines (surface temp: " + $surfaceTemp + "°C)")
-        }
-        System.out.println("H1 CONFIRMED in module " + $moduleId + " - Investigation complete!");
+        // Create finding with proper moduleId support
+        Finding finding = new Finding("Investigation Required", $moduleId, "Condensation detected", "HIGH");
+        insert(finding);
+    end
+
+// Send notification for new findings
+rule "Send notification for new findings"
+    salience 400
+when
+    $finding : Finding( notified == false )
+then
+    notificationService.sendNotification($finding.getType(), "ENVIRONMENTAL_MONITORING", 
+        $finding.getDetails(), $finding.getPriority());
+    modify($finding) { setNotified(true) }
 end
 
-// ============================================================================
-// H2: INSUFFICIENT VENTILATION/COLD ZONES HYPOTHESIS
-// ============================================================================
-
-rule "H2 - Ventilation Source Found"
-    salience 800
-    when
-        $investigation : MoistureInvestigation(
-            investigationComplete == false,
-            $moduleId : currentModuleID
-        )
-        VentilationStatus(moduleID == $moduleId, degraded == true)
-        $environment : Environment(moduleID == $moduleId, $dewPoint : dewPoint)
-        $condensation : CondensationData(
-            moduleID == $moduleId,
-            condensationActive == true,
-            (locationEnum == CondensationLocation.WALLS || locationEnum == CondensationLocation.PANELS),
-            surfaceTemperature <= ($dewPoint + 2.0),
-            $surfaceTemp : surfaceTemperature,
-            $location : location
-        )
-    then
-        modify($investigation) {
-            setInvestigationComplete(true),
-            setSourceFound(true),
-            setConfirmedHypothesis("H2"),
-            setResult("Moisture source FOUND: H2 (Insufficient Ventilation) in module " + $moduleId),
-            setEvidence("Ventilation degraded + condensation on " + $location + " (surface temp: " + $surfaceTemp + "°C near dew point: " + $dewPoint + "°C)")
-        }
-        System.out.println("H2 CONFIRMED in module " + $moduleId + " - Investigation complete!");
-end
-
-// ============================================================================
-// H3: PANEL CONDENSATION/THERMAL BRIDGES HYPOTHESIS
-// ============================================================================
-
-rule "H3 - Thermal Bridge Source Found"
-    salience 700
-    when
-        $investigation : MoistureInvestigation(
-            investigationComplete == false,
-            $moduleId : currentModuleID
-        )
-        $environment : Environment(moduleID == $moduleId, $ambientTemp : temperature, $dewPoint : dewPoint)
-        $condensation : CondensationData(
-            moduleID == $moduleId,
-            condensationActive == true,
-            (locationEnum == CondensationLocation.PANELS || locationEnum == CondensationLocation.EQUIPMENT),
-            surfaceTemperature < ($ambientTemp - 5.0),
-            $surfaceTemp : surfaceTemperature,
-            $location : location
-        )
-    then
-        double tempDiff = $ambientTemp - $surfaceTemp;
-        modify($investigation) {
-            setInvestigationComplete(true),
-            setSourceFound(true),
-            setConfirmedHypothesis("H3"),
-            setResult("Moisture source FOUND: H3 (Thermal Bridges) in module " + $moduleId),
-            setEvidence("Thermal bridge on " + $location + " (surface temp: " + $surfaceTemp + "°C vs ambient: " + $ambientTemp + "°C, diff: " + tempDiff + "°C)")
-        }
-        System.out.println("H3 CONFIRMED in module " + $moduleId + " - Investigation complete!");
-end
-
-// ============================================================================
-// MODULE PROGRESSION
-// ============================================================================
-
-rule "No Source in Current Module - Move to Next"
-    salience 600
-    when
-        $investigation : MoistureInvestigation(
-            investigationComplete == false,
-            $moduleId : currentModuleID,
-            $testedModules : testedModules
-        )
-        // Use Module enum to get next module systematically
-        eval(Module.getNextModuleId($moduleId, $testedModules) != null)
-    then
-        String nextModule = Module.getNextModuleId($moduleId, $testedModules);
-        $investigation.addTestedModule($moduleId);
-        modify($investigation) {
-            setCurrentModuleID(nextModule)
-        }
-        System.out.println("No source in module " + $moduleId + " - moving systematically to module: " + nextModule);
-end
-
-// ============================================================================
-// INVESTIGATION COMPLETE - NO SOURCE FOUND
-// ============================================================================
-
-rule "Investigation Complete - No Source Found"
-    salience 500
-    when
-        $investigation : MoistureInvestigation(
-            investigationComplete == false,
-            $moduleId : currentModuleID,
-            $testedModules : testedModules
-        )
-        // No more untested modules available using Module enum
-        eval(Module.getNextModuleId($moduleId, $testedModules) == null)
-    then
-        $investigation.addTestedModule($moduleId);
-        modify($investigation) {
-            setInvestigationComplete(true),
-            setSourceFound(false),
-            setResult("NO moisture source found in any available module"),
-            setEvidence("Tested modules: " + $testedModules + ", " + $moduleId + " - all hypotheses failed")
-        }
-        System.out.println("Investigation complete - NO moisture source found in any module");
+// Persist findings to global store
+rule "Persist findings to global store"
+    salience 300
+when
+    $finding : Finding( notified == true, $moduleId : moduleId )
+then
+    findingsService.addFindings($moduleId, java.util.Arrays.asList($finding));
 end
