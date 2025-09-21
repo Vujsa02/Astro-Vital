@@ -461,15 +461,20 @@ CEP-1 => _Kondenzacija aktivna_ => (+ Ventilacija degradirana) => _Nakupljanje v
     (b) _Epizodično zagađenje_ (VOC/PM) ili bar povišen VOC/PM;  
     (c) _simptomi_ (iritacija očiju ili kašalj).  
     Ako neki element nedostaje, sistem **zatraži baš taj podatak/merenja**. Kada (a)+(b)+(c) postoje, zaključuje **„Mikrobni rizik — visok prioritet“**.
-    
+
 - **BC cilj 2 — „Gde je izvor vlage?“** (hipoteze i dokazi)
     
-    - **H1: Reciklaža vode/curenje** -> _Reciklaža vode degradirana_ **i** _vizuelno kondenzat/led na vodnim linijama_.
-        
-    - **H2: Nedovoljna ventilacija / hladne zone** -> _Ventilacija degradirana_ **i** _T blizu tačke rose_ na zidovima/panelima.
-        
+    - **H1: Reciklaža vode/curenje** -> _Reciklaža vode degradirana_ **i** _vizuelno kondenzat/led na vodnim linijama_.  
+    
+    - **H2: Nedovoljna ventilacija / hladne zone** -> _Ventilacija degradirana_ **i** _T blizu tačke rose_ na zidovima/panelima.  
+    
     - **H3: Kondenzacija na panelima/mostovi hladnoće** -> _termalne mape pokazuju hladne površine_ **i** _kondenzacija u tim zonama_.  
-        BC prolazi hipoteze redom i **traži ciljane dokaze** dok jedna ne bude ispunjena -> **„Izvor vlage potvrđen (H1/H2/H3)“**.
+    
+    BC u **svakom modulu stanice** prolazi hipoteze redom (H1 → H2 → H3) i **traži ciljane dokaze**.  
+    - Ako se hipoteza potvrdi u modulu → pretraga se zaustavlja i vraća zaključak: **„Izvor vlage potvrđen (H1/H2/H3) u modulu X“**.  
+    - Ako nijedna hipoteza nije potvrđena → BC rekurzivno prelazi na sledeći modul i ponavlja isti postupak.  
+    - Ako se iscrpe svi moduli bez potvrde → vraća se zaključak: **„Izvor vlage nije potvrđen u dostupnim modulima“**.  
+
 
 6. **Template-ovi:**
 
