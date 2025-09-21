@@ -1,0 +1,165 @@
+package rules;
+
+import com.ftn.sbnz.model.models.Environment;
+import com.ftn.sbnz.model.models.CondensationData;
+import com.ftn.sbnz.model.enums.CondensationLocation;
+import com.ftn.sbnz.model.models.WaterRecycling;
+import com.ftn.sbnz.model.models.VentilationStatus;
+import com.ftn.sbnz.model.enums.Module;
+import com.ftn.sbnz.model.models.MoistureInvestigation;
+
+// Query to get investigation result
+query "findMoistureSource"
+    MoistureInvestigation(investigationComplete == true, $result : result, $evidence : evidence)
+end
+
+rule "Start Moisture Investigation"
+    salience 1000
+    when
+        not MoistureInvestigation()
+    then
+        MoistureInvestigation investigation = new MoistureInvestigation(Module.COMMAND.getId());
+        insert(investigation);
+        System.out.println("Starting moisture investigation systematically from module: " + Module.COMMAND.getId());
+end
+
+// ============================================================================
+// H1: WATER RECYCLING/LEAKAGE HYPOTHESIS
+// ============================================================================
+
+rule "H1 - Water Recycling Source Found"
+    salience 900
+    when
+        $investigation : MoistureInvestigation(
+            investigationComplete == false,
+            $moduleId : currentModuleID
+        )
+        WaterRecycling(moduleID == $moduleId, degraded == true)
+        $condensation : CondensationData(
+            moduleID == $moduleId, 
+            condensationActive == true,
+            locationEnum == CondensationLocation.WATER_LINES,
+            $surfaceTemp : surfaceTemperature
+        )
+    then
+        modify($investigation) {
+            setInvestigationComplete(true),
+            setSourceFound(true),
+            setConfirmedHypothesis("H1"),
+            setResult("Moisture source FOUND: H1 (Water Recycling/Leakage) in module " + $moduleId),
+            setEvidence("Water recycling degraded + condensation on water lines (surface temp: " + $surfaceTemp + "°C)")
+        }
+        System.out.println("H1 CONFIRMED in module " + $moduleId + " - Investigation complete!");
+end
+
+// ============================================================================
+// H2: INSUFFICIENT VENTILATION/COLD ZONES HYPOTHESIS
+// ============================================================================
+
+rule "H2 - Ventilation Source Found"
+    salience 800
+    when
+        $investigation : MoistureInvestigation(
+            investigationComplete == false,
+            $moduleId : currentModuleID
+        )
+        VentilationStatus(moduleID == $moduleId, degraded == true)
+        $environment : Environment(moduleID == $moduleId, $dewPoint : dewPoint)
+        $condensation : CondensationData(
+            moduleID == $moduleId,
+            condensationActive == true,
+            (locationEnum == CondensationLocation.WALLS || locationEnum == CondensationLocation.PANELS),
+            surfaceTemperature <= ($dewPoint + 2.0),
+            $surfaceTemp : surfaceTemperature,
+            $location : location
+        )
+    then
+        modify($investigation) {
+            setInvestigationComplete(true),
+            setSourceFound(true),
+            setConfirmedHypothesis("H2"),
+            setResult("Moisture source FOUND: H2 (Insufficient Ventilation) in module " + $moduleId),
+            setEvidence("Ventilation degraded + condensation on " + $location + " (surface temp: " + $surfaceTemp + "°C near dew point: " + $dewPoint + "°C)")
+        }
+        System.out.println("H2 CONFIRMED in module " + $moduleId + " - Investigation complete!");
+end
+
+// ============================================================================
+// H3: PANEL CONDENSATION/THERMAL BRIDGES HYPOTHESIS
+// ============================================================================
+
+rule "H3 - Thermal Bridge Source Found"
+    salience 700
+    when
+        $investigation : MoistureInvestigation(
+            investigationComplete == false,
+            $moduleId : currentModuleID
+        )
+        $environment : Environment(moduleID == $moduleId, $ambientTemp : temperature, $dewPoint : dewPoint)
+        $condensation : CondensationData(
+            moduleID == $moduleId,
+            condensationActive == true,
+            (locationEnum == CondensationLocation.PANELS || locationEnum == CondensationLocation.EQUIPMENT),
+            surfaceTemperature < ($ambientTemp - 5.0),
+            $surfaceTemp : surfaceTemperature,
+            $location : location
+        )
+    then
+        double tempDiff = $ambientTemp - $surfaceTemp;
+        modify($investigation) {
+            setInvestigationComplete(true),
+            setSourceFound(true),
+            setConfirmedHypothesis("H3"),
+            setResult("Moisture source FOUND: H3 (Thermal Bridges) in module " + $moduleId),
+            setEvidence("Thermal bridge on " + $location + " (surface temp: " + $surfaceTemp + "°C vs ambient: " + $ambientTemp + "°C, diff: " + tempDiff + "°C)")
+        }
+        System.out.println("H3 CONFIRMED in module " + $moduleId + " - Investigation complete!");
+end
+
+// ============================================================================
+// MODULE PROGRESSION
+// ============================================================================
+
+rule "No Source in Current Module - Move to Next"
+    salience 600
+    when
+        $investigation : MoistureInvestigation(
+            investigationComplete == false,
+            $moduleId : currentModuleID,
+            $testedModules : testedModules
+        )
+        // Use Module enum to get next module systematically
+        eval(Module.getNextModuleId($moduleId, $testedModules) != null)
+    then
+        String nextModule = Module.getNextModuleId($moduleId, $testedModules);
+        $investigation.addTestedModule($moduleId);
+        modify($investigation) {
+            setCurrentModuleID(nextModule)
+        }
+        System.out.println("No source in module " + $moduleId + " - moving systematically to module: " + nextModule);
+end
+
+// ============================================================================
+// INVESTIGATION COMPLETE - NO SOURCE FOUND
+// ============================================================================
+
+rule "Investigation Complete - No Source Found"
+    salience 500
+    when
+        $investigation : MoistureInvestigation(
+            investigationComplete == false,
+            $moduleId : currentModuleID,
+            $testedModules : testedModules
+        )
+        // No more untested modules available using Module enum
+        eval(Module.getNextModuleId($moduleId, $testedModules) == null)
+    then
+        $investigation.addTestedModule($moduleId);
+        modify($investigation) {
+            setInvestigationComplete(true),
+            setSourceFound(false),
+            setResult("NO moisture source found in any available module"),
+            setEvidence("Tested modules: " + $testedModules + ", " + $moduleId + " - all hypotheses failed")
+        }
+        System.out.println("Investigation complete - NO moisture source found in any module");
+end
