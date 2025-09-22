@@ -5,21 +5,16 @@ import com.ftn.sbnz.model.models.CondensationData;
 import com.ftn.sbnz.model.models.Finding;
 import com.ftn.sbnz.model.enums.CondensationLocation;
 import com.ftn.sbnz.model.events.HumidityEvent;
+import com.ftn.sbnz.model.models.MoistureInvestigation;
+import com.ftn.sbnz.model.enums.Module;
 
-global com.ftn.sbnz.service.services.NotificationService notificationService;
-global com.ftn.sbnz.service.services.InvestigationService investigationService;
 global com.ftn.sbnz.service.services.FindingsService findingsService;
 
-// Declare HumidityEvent as an event type for CEP
-declare HumidityEvent
-    @role( event )
-    @timestamp( timestamp )
-    @expires( 7h ) 
-end
 
 // CEP Rule: Sliding 6-hour window for humidity trend detection
 rule "Condensation detection - 6 hour sliding humidity trend - update existing WALLS"
-    salience 1200  // High priority - detect condensation first
+    agenda-group "cep.environment"
+    salience 1200  // High priority - cep condensation first
 when
     // Most recent humidity reading (within last 5 minutes)
     $recent: HumidityEvent($moduleId: moduleId, $recentHumidity: humidity)
@@ -73,7 +68,8 @@ end
 
 // Alternative: Use collect for more robust window analysis
 rule "Condensation detection - 6 hour collect pattern - update existing PANELS"
-    salience 1200  // High priority - detect condensation first
+    agenda-group "cep.environment"
+    salience 1200  // High priority - cep condensation first
 when
     // Most recent humidity reading (within last 5 minutes)
     $recent: HumidityEvent($moduleId: moduleId, $recentHumidity: humidity)
@@ -126,7 +122,8 @@ end
 
 // Water lines condensation detection based on surface temperature vs dew point
 rule "Condensation detection - Water lines temperature check"
-    salience 1200  // High priority - detect condensation first
+    agenda-group "cep.environment"
+    salience 1200  // High priority - cep condensation first
 when
  $recent: HumidityEvent($moduleId: moduleId, $recentHumidity: humidity)
     not HumidityEvent(moduleId == $moduleId, timestamp > $recent.timestamp)
@@ -134,7 +131,7 @@ when
     $oldest: HumidityEvent(
         moduleId == $moduleId,
         $oldestHumidity: humidity,
-        this before[5h55m,6h5m] $recent  // 6-hour window with 5min tolerance
+        this before[5h55m,6h5m] $recent  
     )
     
     not HumidityEvent(
@@ -173,7 +170,7 @@ then
 end
 
 // Trigger moisture investigation when condensation is detected on critical surfaces
-rule "Trigger Moisture Investigation - Condensation Detected"
+    agenda-group "cep.environment"
     salience 500  // Lower priority - runs AFTER all condensation detection rules
     when
         // Check for active condensation on critical surfaces
@@ -192,22 +189,135 @@ rule "Trigger Moisture Investigation - Condensation Detected"
         insert(finding);
     end
 
-// Send notification for new findings
-rule "Send notification for new findings"
-    salience 400
-when
-    $finding : Finding( notified == false )
-then
-    notificationService.sendNotification($finding.getType(), "ENVIRONMENTAL_MONITORING", 
-        $finding.getDetails(), $finding.getPriority());
-    modify($finding) { setNotified(true) }
-end
+
 
 // Persist findings to global store
-rule "Persist findings to global store"
+    agenda-group "persist.actions"
     salience 300
 when
     $finding : Finding( notified == true, $moduleId : moduleId )
 then
     findingsService.addFindings($moduleId, java.util.Arrays.asList($finding));
+end
+
+
+
+query isMoistureSourceIn(String moduleId, String hypothesis)
+    (
+        // H1: Water recycling degraded + condensation on water lines
+        hypothesis == "H1"
+        and WaterRecycling(moduleID == moduleId, degraded == true)
+        and CondensationData(moduleID == moduleId, locationEnum == CondensationLocation.WATER_LINES)
+    )
+    or
+    (
+        // H2: Ventilation degraded + condensation near dew point on walls
+        hypothesis == "H2"
+        and VentilationStatus(moduleID == moduleId, degraded == true)
+        and Environment(moduleID == moduleId, $dewPoint : dewPoint)
+        and CondensationData(moduleID == moduleId, locationEnum == CondensationLocation.WALLS, surfaceTemperature <= ($dewPoint + 2.0))
+    )
+    or
+    (
+        // H3: Thermal bridge (cold panels)
+        hypothesis == "H3"
+        and Environment(moduleID == moduleId, $ambient : temperature)
+        and CondensationData(moduleID == moduleId, locationEnum == CondensationLocation.PANELS, surfaceTemperature < ($ambient - 5.0))
+    )
+    or
+    (
+        // Recursion: check in the "next" module
+        // recursion removed: investigation logic advances modules instead
+    )
+end
+
+// Investigation agenda for moisture sources
+// Rules below run when Java focuses the "investigate.moisture" agenda-group.
+
+rule "Investigate H1 - Water recycling"
+    agenda-group "investigate.moisture"
+    salience 300
+when
+    $mi : MoistureInvestigation( $mod : currentModuleID, investigationComplete == false, sourceFound == false )
+    isMoistureSourceIn($mod, "H1")
+then
+    modify($mi) {
+        addTestedModule($mod);
+        setSourceFound(true);
+        setConfirmedHypothesis("H1");
+        setResult("Water recycling degraded in module " + $mod);
+        setInvestigationComplete(true);
+    }
+    Finding f = new Finding("Moisture source identified", $mod, "H1 matched: Water recycling degraded", "HIGH");
+    insert(f);
+end
+
+rule "Investigate H2 - Ventilation"
+    agenda-group "investigate.moisture"
+    salience 200
+when
+    $mi : MoistureInvestigation( $mod : currentModuleID, investigationComplete == false, sourceFound == false )
+    isMoistureSourceIn($mod, "H2")
+then
+    modify($mi) {
+        addTestedModule($mod);
+        setSourceFound(true);
+        setConfirmedHypothesis("H2");
+        setResult("Ventilation degraded near dew point in module " + $mod);
+        setInvestigationComplete(true);
+    }
+    Finding f = new Finding("Moisture source identified", $mod, "H2 matched: Ventilation degraded", "HIGH");
+    insert(f);
+end
+
+rule "Investigate H3 - Thermal bridge"
+    agenda-group "investigate.moisture"
+    salience 100
+when
+    $mi : MoistureInvestigation( $mod : currentModuleID, investigationComplete == false, sourceFound == false )
+    isMoistureSourceIn($mod, "H3")
+then
+    modify($mi) {
+        addTestedModule($mod);
+        setSourceFound(true);
+        setConfirmedHypothesis("H3");
+        setResult("Thermal bridge / cold panels in module " + $mod);
+        setInvestigationComplete(true);
+    }
+    Finding f = new Finding("Moisture source identified", $mod, "H3 matched: Thermal bridge", "HIGH");
+    insert(f);
+end
+
+// If none of the hypotheses matched for the current module, advance to the next untested module
+rule "Advance investigation to next module"
+    agenda-group "investigate.moisture"
+    salience 50
+when
+    $mi : MoistureInvestigation( $mod : currentModuleID, investigationComplete == false, sourceFound == false, $testedModules : testedModules )
+    $next : String() from Module.getNextModuleId($mod, $testedModules)
+then
+    // mark current as tested and move to next
+    modify($mi) {
+        addTestedModule($mod);
+        setCurrentModuleID($next);
+    }
+end
+
+// If there is no next module to try, complete the investigation as not found
+rule "Investigation complete - no source found"
+    agenda-group "investigate.moisture"
+    salience 10
+when
+    $mi : MoistureInvestigation( $mod : currentModuleID, investigationComplete == false, sourceFound == false, $testedModules : testedModules )
+    eval(Module.getNextModuleId($mod, $testedModules) == null)
+then
+    modify($mi) {
+        addTestedModule($mod);
+        setInvestigationComplete(true);
+        setSourceFound(false);
+        setResult("No moisture source found after scanning all modules");
+        setCompletionTimestamp(System.currentTimeMillis());
+    }
+    Finding f = new Finding("Investigation complete - no source", $mi.getCurrentModuleID(), "No source found after scanning all modules", "LOW");
+    insert(f);
 end

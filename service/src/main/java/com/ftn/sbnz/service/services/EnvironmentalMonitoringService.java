@@ -22,17 +22,13 @@ import java.util.List;
 public class EnvironmentalMonitoringService {
 
   private final KieContainer kieContainer;
-  private final NotificationService notificationService;
-  private final InvestigationService investigationService;
   private final FindingsService findingsService;
   private KieSession cepSession;
 
   @Autowired
-  public EnvironmentalMonitoringService(KieContainer kieContainer, NotificationService notificationService,
-      InvestigationService investigationService, FindingsService findingsService) {
+  public EnvironmentalMonitoringService(KieContainer kieContainer,
+      FindingsService findingsService) {
     this.kieContainer = kieContainer;
-    this.notificationService = notificationService;
-    this.investigationService = investigationService;
     this.findingsService = findingsService;
   }
 
@@ -40,8 +36,6 @@ public class EnvironmentalMonitoringService {
   public void init() {
     // Use single CEP session for all modules - eventProcessingMode="stream"
     this.cepSession = kieContainer.newKieSession("environmental-session");
-    this.cepSession.setGlobal("notificationService", notificationService);
-    this.cepSession.setGlobal("investigationService", investigationService);
     this.cepSession.setGlobal("findingsService", findingsService);
     System.out.println("EnvironmentalMonitoringService: Initialized single CEP session");
   }
@@ -67,7 +61,8 @@ public class EnvironmentalMonitoringService {
     condensationDataList.forEach(cepSession::insert);
     humidityEvents.forEach(cepSession::insert);
 
-    // Fire CEP rules for all modules in the single session
+    // Run CEP agenda group then investigation agenda in same session
+    cepSession.getAgenda().getAgendaGroup("cep.environment").setFocus();
     int rulesFired = cepSession.fireAllRules();
     System.out.println("Environmental CEP: Fired " + rulesFired + " rules across all modules");
 
@@ -80,43 +75,51 @@ public class EnvironmentalMonitoringService {
         allFindings.add(finding);
 
         // Check if this is an investigation request finding
-        if ("Investigation Required".equals(finding.getType()) && !investigationService.hasActiveInvestigation()) {
-          // Use moduleId directly from Finding object
-          String moduleId = finding.getModuleId();
+        if ("Investigation Required".equals(finding.getType())) {
+          // Check if there's already an active investigation in the CEP session
+          boolean hasActiveInvestigation = cepSession.getObjects()
+              .stream()
+              .anyMatch(o -> o instanceof MoistureInvestigation &&
+                  !((MoistureInvestigation) o).isInvestigationComplete());
 
-          // Start investigation for the module
-          investigationService.startInvestigation(moduleId);
+          if (!hasActiveInvestigation) {
+            // Use moduleId directly from Finding object
+            String moduleId = finding.getModuleId();
+            // Start investigation for the module by inserting a MoistureInvestigation into
+            // CEP session
+            MoistureInvestigation newInvestigation = new MoistureInvestigation(moduleId);
+            cepSession.insert(newInvestigation);
 
-          // Collect ALL updated condensation data from this session for ALL modules
-          Collection<?> allCondensationObjects = cepSession.getObjects(o -> o instanceof CondensationData);
-          List<CondensationData> allCondensation = new ArrayList<>();
-          for (Object condensationObj : allCondensationObjects) {
-            allCondensation.add((CondensationData) condensationObj);
+            // Run investigation agenda in the same CEP session with guarded loop
+            cepSession.getAgenda().getAgendaGroup("investigate.moisture").setFocus();
+
+            // Guarded loop to ensure rules re-evaluate after modify(...) actions
+            int maxIterations = 20;
+            int iter = 0;
+            while (!newInvestigation.isInvestigationComplete() && iter < maxIterations) {
+              int fired = cepSession.fireAllRules();
+              if (fired == 0)
+                break; // nothing new to do
+              iter++;
+            }
+
+            if (!newInvestigation.isInvestigationComplete()) {
+              System.out
+                  .println("Investigation did not finish within " + maxIterations + " cycles for module " + moduleId);
+            }
+
+            System.out.println("INVESTIGATION STARTED (in CEP session): Based on finding for module " + moduleId);
           }
-
-          // Collect ALL environment data for ALL modules
-          Collection<?> allEnvironmentObjects = cepSession.getObjects(o -> o instanceof Environment);
-          List<Environment> allEnvironments = new ArrayList<>();
-          for (Object envObj : allEnvironmentObjects) {
-            allEnvironments.add((Environment) envObj);
-          }
-
-          // Transfer complete current state to investigation session
-          investigationService.insertFactsForInvestigation(allCondensation.toArray());
-          investigationService.insertFactsForInvestigation(allEnvironments.toArray());
-
-          // Now fire investigation rules after all facts are inserted
-          investigationService.processInvestigation();
-
-          System.out.println("INVESTIGATION STARTED: Based on finding for module " + moduleId +
-              " - Transferred " + allCondensation.size() + " condensation points and " +
-              allEnvironments.size() + " environments");
         }
       }
     }
 
-    // Get current investigation status
-    investigation = investigationService.getCurrentInvestigation();
+    // Get current investigation status from CEP session (if one was inserted there)
+    investigation = (MoistureInvestigation) cepSession.getObjects()
+        .stream()
+        .filter(o -> o instanceof MoistureInvestigation)
+        .findFirst()
+        .orElse(null);
 
     return new EnvironmentalAnalysisResult(investigation, allFindings, rulesFired);
   }
@@ -140,8 +143,6 @@ public class EnvironmentalMonitoringService {
     if (cepSession != null) {
       cepSession.dispose();
       cepSession = kieContainer.newKieSession("environmental-session");
-      cepSession.setGlobal("notificationService", notificationService);
-      cepSession.setGlobal("investigationService", investigationService);
       cepSession.setGlobal("findingsService", findingsService);
       System.out.println("EnvironmentalMonitoringService: CEP session reset");
     }

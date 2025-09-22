@@ -15,44 +15,54 @@ import java.util.List;
 public class HealthMetricsService {
 
   private final KieContainer kieContainer;
-  private final NotificationService notificationService;
   private final FindingsService findingsService;
 
   @Autowired
-  public HealthMetricsService(KieContainer kieContainer, NotificationService notificationService,
-      FindingsService findingsService) {
+  public HealthMetricsService(KieContainer kieContainer, FindingsService findingsService) {
     this.kieContainer = kieContainer;
-    this.notificationService = notificationService;
     this.findingsService = findingsService;
   }
 
-  public synchronized List<Finding> checkHealthMetrics(List<Environment> environments, List<Vitals> vitalsList,
-      List<CrewSymptoms> symptomsList, List<VentilationStatus> ventilationList) {
-    KieSession kieSession = kieContainer.newKieSession("health-session");
+  public synchronized List<Finding> checkHealthMetrics(Environment environment, Vitals vitals,
+      CrewSymptoms symptoms, VentilationStatus ventilationStatus) {
+    KieSession kieSession = kieContainer.newKieSession();
 
     // Clean up expired findings for all modules before processing
     findingsService.cleanupAllExpiredFindings();
 
     // Set globals
-    kieSession.setGlobal("notificationService", notificationService);
     kieSession.setGlobal("findingsService", findingsService);
 
-    // Insert all environment facts
-    environments.forEach(kieSession::insert);
-    vitalsList.forEach(kieSession::insert);
-    symptomsList.forEach(kieSession::insert);
-    ventilationList.forEach(kieSession::insert);
+    // Insert provided facts (null-safe)
+    if (environment != null)
+      kieSession.insert(environment);
+    if (vitals != null)
+      kieSession.insert(vitals);
+    if (symptoms != null)
+      kieSession.insert(symptoms);
+    if (ventilationStatus != null)
+      kieSession.insert(ventilationStatus);
 
-    // Fire all rules (both hypoxia and chemical air quality)
-    int rulesFired = kieSession.fireAllRules();
-    System.out.println("Health Metrics: Fired " + rulesFired + " rules");
+    // Run pipeline by agenda groups: detect -> diagnose -> persist
+    kieSession.getAgenda().getAgendaGroup("detect.health").setFocus();
+    kieSession.fireAllRules();
 
-    // Gather findings inserted by rules
+    kieSession.getAgenda().getAgendaGroup("diagnose.health").setFocus();
+    kieSession.fireAllRules();
+
+    // Print findings from memory (for debugging/temporary simple output)
     List<Finding> findings = new ArrayList<>();
     Collection<?> inserted = kieSession.getObjects(o -> o instanceof Finding);
     for (Object obj : inserted) {
-      findings.add((Finding) obj);
+      Finding f = (Finding) obj;
+      findings.add(f);
+      System.out.println("Found: " + f.getType() + " | module=" + f.getModuleId() + " | priority=" + f.getPriority()
+          + " | details=" + f.getDetails());
     }
+
+    // Persist actions
+    kieSession.getAgenda().getAgendaGroup("persist.actions").setFocus();
+    kieSession.fireAllRules();
 
     kieSession.dispose();
     return findings;

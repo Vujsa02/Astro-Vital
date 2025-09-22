@@ -22,9 +22,9 @@ public class HealthMetricsController {
   @PostMapping("/check")
   public List<Finding> checkHealthMetrics(@RequestBody HealthMetricsRequest request) {
     return healthMetricsService.checkHealthMetrics(
-        request.getEnvironments(),
-        request.getVitalsList(),
-        request.getCrewSymptomsList(),
-        request.getVentilationStatusList());
+        request.getEnvironment(),
+        request.getVitals(),
+        request.getCrewSymptoms(),
+        request.getVentilationStatus());
   }
 }

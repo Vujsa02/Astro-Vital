@@ -1,22 +1,4 @@
 <kmodule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xmlns="http://jboss.org/kie/6.0.0/kmodule">
-
-    <!-- Unified session with all packages - allows cross-domain rules -->
-    <kbase name="unified-kbase" packages="healthmonitoring,equipmentmaintenance,environmentalmonitoring,crossdomain" eventProcessingMode="stream">
-        <ksession name="unified-session" type="stateful" clockType="realtime"/>
-    </kbase>
-
-    <!-- Optional: Domain-specific sessions for targeted rule execution -->
-    <kbase name="health-kbase" packages="healthmonitoring">
-        <ksession name="health-session"/>
-    </kbase>
-    
-    <kbase name="equipment-kbase" packages="equipmentmaintenance">
-        <ksession name="equipment-session"/>
-    </kbase>
-    
-    <kbase name="environmental-kbase" packages="environmentalmonitoring" eventProcessingMode="stream">
-        <ksession name="environmental-session" type="stateful" clockType="realtime"/>
-    </kbase>
+         xmlns="http://jboss.org/kie/6.0.0/kmodule">
 
 </kmodule>

@@ -22,8 +22,8 @@ public class EquipmentMaintenanceController {
   @PostMapping("/check")
   public List<Finding> checkMaintenanceNeeds(@RequestBody EquipmentMaintenanceRequest request) {
     return equipmentMaintenanceService.checkMaintenanceNeeds(
-        request.getEnvironments(),
-        request.getVentilationStatusList(),
-        request.getAirFilterList());
+        request.getEnvironment(),
+        request.getVentilationStatus(),
+        request.getAirFilter());
   }
 }

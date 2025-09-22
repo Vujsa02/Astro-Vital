@@ -1,0 +1,16 @@
+package healthmonitoring
+
+import com.ftn.sbnz.model.models.Finding
+import com.ftn.sbnz.service.services.FindingsService
+
+global FindingsService findingsService
+
+// PERSISTENCE ACTIONS
+agenda-group "persist.actions"
+
+rule "Persist findings to global store"
+when
+    $finding : Finding( notified == true, $moduleId : moduleId )
+then
+    findingsService.addFindings($moduleId, java.util.Arrays.asList($finding));
+end

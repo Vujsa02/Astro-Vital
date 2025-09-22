@@ -4,13 +4,13 @@ import com.ftn.sbnz.model.models.Environment
 import com.ftn.sbnz.model.models.VentilationStatus
 import com.ftn.sbnz.model.models.AirFilter
 import com.ftn.sbnz.model.models.Finding
-import com.ftn.sbnz.service.services.NotificationService
 import com.ftn.sbnz.service.services.FindingsService
 
-global NotificationService notificationService
 global FindingsService findingsService
 
+// DETECTION RULES
 rule "Ventilation service required"
+    agenda-group "detect.equipment"
 when
     $env: Environment( co2Level > 1000, $moduleId : moduleID )
     VentilationStatus( moduleID == $moduleId, degraded == true )
@@ -23,6 +23,7 @@ then
 end
 
 rule "Air filter replacement required"
+    agenda-group "detect.equipment"
 when
     $env: Environment( co2Level > 1000, $moduleId : moduleID )
     AirFilter( moduleID == $moduleId, dirty == true )
@@ -34,20 +35,3 @@ then
     insert(finding);
 end
 
-rule "Send notification for new findings"
-    salience 500
-when
-    $finding : Finding( notified == false )
-then
-    notificationService.sendNotification($finding.getType(), "EQUIPMENT_MAINTENANCE", 
-        $finding.getDetails(), $finding.getPriority());
-    modify($finding) { setNotified(true) }
-end
-
-rule "Persist findings to global store"
-    salience 400
-when
-    $finding : Finding( notified == true, $moduleId : moduleId )
-then
-    findingsService.addFindings($moduleId, java.util.Arrays.asList($finding));
-end

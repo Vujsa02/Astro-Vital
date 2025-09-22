@@ -15,47 +15,50 @@ import java.util.List;
 public class EquipmentMaintenanceService {
 
   private final KieContainer kieContainer;
-  private final NotificationService notificationService;
   private final FindingsService findingsService;
 
   @Autowired
-  public EquipmentMaintenanceService(KieContainer kieContainer, NotificationService notificationService,
-      FindingsService findingsService) {
+  public EquipmentMaintenanceService(KieContainer kieContainer, FindingsService findingsService) {
     this.kieContainer = kieContainer;
-    this.notificationService = notificationService;
     this.findingsService = findingsService;
   }
 
-  public synchronized List<Finding> checkMaintenanceNeeds(List<Environment> environments,
-      List<VentilationStatus> ventilationList,
-      List<AirFilter> airFilterList) {
+  public synchronized List<Finding> checkMaintenanceNeeds(Environment environment,
+      VentilationStatus ventilationStatus, AirFilter airFilter) {
 
     // Clean up expired findings from global store first
     findingsService.cleanupAllExpiredFindings();
 
-    KieSession kieSession = kieContainer.newKieSession("equipment-session");
-
-    // Set the global notification service
-    kieSession.setGlobal("notificationService", notificationService);
+    KieSession kieSession = kieContainer.newKieSession();
 
     // Set the global findings service so rules can persist findings
     kieSession.setGlobal("findingsService", findingsService);
 
-    // Insert all facts
-    environments.forEach(kieSession::insert);
-    ventilationList.forEach(kieSession::insert);
-    airFilterList.forEach(kieSession::insert);
+    // Insert provided facts (null-safe)
+    if (environment != null)
+      kieSession.insert(environment);
+    if (ventilationStatus != null)
+      kieSession.insert(ventilationStatus);
+    if (airFilter != null)
+      kieSession.insert(airFilter);
 
-    // Fire all rules
-    int rulesFired = kieSession.fireAllRules();
-    System.out.println("Equipment Maintenance: Fired " + rulesFired + " rules");
+    // Run pipeline by agenda groups: detect -> persist
+    kieSession.getAgenda().getAgendaGroup("detect.equipment").setFocus();
+    kieSession.fireAllRules();
 
-    // Collect findings
+    // Print findings from memory
     List<Finding> findings = new ArrayList<>();
     Collection<?> objects = kieSession.getObjects(o -> o instanceof Finding && !((Finding) o).isExpired());
     for (Object obj : objects) {
-      findings.add((Finding) obj);
+      Finding f = (Finding) obj;
+      findings.add(f);
+      System.out.println(
+          "Equipment Finding: " + f.getType() + " | module=" + f.getModuleId() + " | priority=" + f.getPriority());
     }
+
+    // Persist actions
+    kieSession.getAgenda().getAgendaGroup("persist.actions").setFocus();
+    kieSession.fireAllRules();
 
     kieSession.dispose();
     return findings;

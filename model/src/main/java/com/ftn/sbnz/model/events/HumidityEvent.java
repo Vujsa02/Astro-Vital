@@ -1,5 +1,12 @@
 package com.ftn.sbnz.model.events;
 
+import org.kie.api.definition.type.Role;
+import org.kie.api.definition.type.Timestamp;
+import org.kie.api.definition.type.Expires;
+
+@Role(Role.Type.EVENT)
+@Timestamp("timestamp") // property name must exist on the class
+@Expires("7h")
 public class HumidityEvent {
 
   private long timestamp;

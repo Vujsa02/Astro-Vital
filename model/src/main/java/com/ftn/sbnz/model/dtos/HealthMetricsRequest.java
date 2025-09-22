@@ -1,54 +1,53 @@
 package com.ftn.sbnz.model.dtos;
 
 import com.ftn.sbnz.model.models.*;
-import java.util.List;
 
 public class HealthMetricsRequest {
-  private List<Environment> environments;
-  private List<Vitals> vitalsList;
-  private List<CrewSymptoms> crewSymptomsList;
-  private List<VentilationStatus> ventilationStatusList;
+  private Environment environment;
+  private Vitals vitals;
+  private CrewSymptoms crewSymptoms;
+  private VentilationStatus ventilationStatus;
 
   public HealthMetricsRequest() {
   }
 
-  public HealthMetricsRequest(List<Environment> environments, List<Vitals> vitalsList,
-      List<CrewSymptoms> crewSymptomsList, List<VentilationStatus> ventilationStatusList) {
-    this.environments = environments;
-    this.vitalsList = vitalsList;
-    this.crewSymptomsList = crewSymptomsList;
-    this.ventilationStatusList = ventilationStatusList;
+  public HealthMetricsRequest(Environment environment, Vitals vitals, CrewSymptoms crewSymptoms,
+      VentilationStatus ventilationStatus) {
+    this.environment = environment;
+    this.vitals = vitals;
+    this.crewSymptoms = crewSymptoms;
+    this.ventilationStatus = ventilationStatus;
   }
 
-  public List<Environment> getEnvironments() {
-    return environments;
+  public Environment getEnvironment() {
+    return environment;
   }
 
-  public void setEnvironments(List<Environment> environments) {
-    this.environments = environments;
+  public void setEnvironment(Environment environment) {
+    this.environment = environment;
   }
 
-  public List<Vitals> getVitalsList() {
-    return vitalsList;
+  public Vitals getVitals() {
+    return vitals;
   }
 
-  public void setVitalsList(List<Vitals> vitalsList) {
-    this.vitalsList = vitalsList;
+  public void setVitals(Vitals vitals) {
+    this.vitals = vitals;
   }
 
-  public List<CrewSymptoms> getCrewSymptomsList() {
-    return crewSymptomsList;
+  public CrewSymptoms getCrewSymptoms() {
+    return crewSymptoms;
   }
 
-  public void setCrewSymptomsList(List<CrewSymptoms> crewSymptomsList) {
-    this.crewSymptomsList = crewSymptomsList;
+  public void setCrewSymptoms(CrewSymptoms crewSymptoms) {
+    this.crewSymptoms = crewSymptoms;
   }
 
-  public List<VentilationStatus> getVentilationStatusList() {
-    return ventilationStatusList;
+  public VentilationStatus getVentilationStatus() {
+    return ventilationStatus;
   }
 
-  public void setVentilationStatusList(List<VentilationStatus> ventilationStatusList) {
-    this.ventilationStatusList = ventilationStatusList;
+  public void setVentilationStatus(VentilationStatus ventilationStatus) {
+    this.ventilationStatus = ventilationStatus;
   }
 }
