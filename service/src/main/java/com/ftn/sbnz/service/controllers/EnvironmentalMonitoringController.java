@@ -22,10 +22,13 @@ public class EnvironmentalMonitoringController {
 
   @PostMapping("/process")
   public EnvironmentalAnalysisResult processEnvironmentalData(@RequestBody EnvironmentalMonitoringRequest request) {
+    System.out.println("Received health metrics check request: " + request);
     return environmentalMonitoringService.processEnvironmentalData(
         request.getEnvironments(),
         request.getCondensationDataList(),
-        request.getHumidityEvents());
+        request.getHumidityEvents(),
+        request.getWaterRecyclings(),
+        request.getVentilationStatuses());
   }
 
   @GetMapping("/condensation/{moduleId}")

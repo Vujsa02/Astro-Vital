@@ -61,7 +61,6 @@ public class WaterRecycling {
                 "moduleID='" + moduleID + '\'' +
                 ", degraded=" + degraded +
                 ", efficiency=" + efficiency +
-                ", leakageDetected=" + leakageDetected +
                 '}';
     }
 }

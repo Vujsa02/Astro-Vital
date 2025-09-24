@@ -10,7 +10,12 @@ agenda-group "persist.actions"
 
 rule "Persist findings to global store"
 when
-    $finding : Finding( notified == true, $moduleId : moduleId )
+    // match only findings that have NOT been notified/persisted yet
+    $finding : Finding( notified == false, $moduleId : moduleId )
 then
+    // mark as notified so subsequent rules in the same session don't repersist
+    $finding.setNotified(true);
+    update($finding);
+    // persist to global store
     findingsService.addFindings($moduleId, java.util.Arrays.asList($finding));
 end

@@ -125,4 +125,20 @@ public class Environment {
     // / 5)
     this.dewPoint = temperature - ((100 - humidity) / 5);
   }
+
+  @Override
+  public String toString() {
+    return "Environment{" +
+        "o2Level=" + o2Level +
+        ", co2Level=" + co2Level +
+        ", coLevel=" + coLevel +
+        ", moduleID='" + moduleID + '\'' +
+        ", temperature=" + temperature +
+        ", humidity=" + humidity +
+        ", pressure=" + pressure +
+        ", vocLevel=" + vocLevel +
+        ", pmLevel=" + pmLevel +
+        ", dewPoint=" + dewPoint +
+        '}';
+  }
 }

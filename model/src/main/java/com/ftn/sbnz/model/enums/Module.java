@@ -3,9 +3,6 @@ package com.ftn.sbnz.model.enums;
 public enum Module {
     COMMAND("CMD"),
     LABORATORY("LAB"),
-    LIFE_SUPPORT("LIFE"),
-    STORAGE("STOR"),
-    POWER("PWR"),
     COMMUNICATION("COMM");
 
     private final String id;

@@ -58,6 +58,15 @@ public class CondensationData {
         this.location = location;
     }
 
+    // Accept JSON property name "locationEnum" as well as "location"
+    public void setLocationEnum(CondensationLocation location) {
+        this.location = location;
+    }
+
+    public void setLocationEnum(String location) {
+        this.location = CondensationLocation.fromString(location);
+    }
+
     public double getSurfaceTemperature() {
         return surfaceTemperature;
     }

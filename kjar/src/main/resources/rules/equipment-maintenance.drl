@@ -13,9 +13,9 @@ rule "Ventilation service required"
     agenda-group "detect.equipment"
 when
     $env: Environment( co2Level > 1000, $moduleId : moduleID )
-    VentilationStatus( moduleID == $moduleId, degraded == true )
-    // Check if this finding already exists in the global store for this specific module
     eval(!findingsService.hasActiveFinding($moduleId, "Ventilation service required"))
+    not Finding( type == "Ventilation service required", moduleId == $moduleId )
+    VentilationStatus( moduleID == $moduleId, degraded == true )
 then
     Finding finding = new Finding("Ventilation service required", $moduleId, 
         "Degraded ventilation with CO2 > 1000 ppm in module " + $moduleId, "HIGH");
@@ -26,9 +26,10 @@ rule "Air filter replacement required"
     agenda-group "detect.equipment"
 when
     $env: Environment( co2Level > 1000, $moduleId : moduleID )
-    AirFilter( moduleID == $moduleId, dirty == true )
     // Check if this finding already exists in the global store for this specific module
     eval(!findingsService.hasActiveFinding($moduleId, "Air filter replacement required"))
+    not Finding( type == "Air filter replacement required", moduleId == $moduleId )
+    AirFilter( moduleID == $moduleId, dirty == true )
 then
     Finding finding = new Finding("Air filter replacement required", $moduleId,
         "Dirty air filter with CO2 > 1000 ppm in module " + $moduleId, "MEDIUM");

@@ -13,8 +13,10 @@ global FindingsService findingsService
 rule "Risk of hypoxia - detect"
     agenda-group "detect.health"
 when
-    eval(!findingsService.hasActiveFinding($moduleId, "Risk of hypoxia"))
+    // bind module from provided Environment fact
     $env: Environment( o2Level < 19.5 || co2Level > 1000, $moduleId : moduleID )
+    eval(!findingsService.hasActiveFinding($moduleId, "Risk of hypoxia"))
+    not Finding( type == "Risk of hypoxia", moduleId == $moduleId )
 then
     Finding finding = new Finding("Risk of hypoxia", $moduleId, 
         "Environmental risk detected in module " + $moduleId, "HIGH");
@@ -25,9 +27,12 @@ end
 rule "Chemical irritants present - detect"
     agenda-group "detect.health"
 when
-    eval(!findingsService.hasActiveFinding($moduleId, "Chemical irritants present"))
+    // bind module from provided Environment fact
     $env: Environment( coLevel > 35, $moduleId : moduleID )
-    CrewSymptoms( moduleId == $moduleId, eyeIrritation == true )
+    eval(!findingsService.hasActiveFinding($moduleId, "Chemical irritants present"))
+    not Finding( type == "Chemical irritants present", moduleId == $moduleId )
+    // CrewSymptoms has no moduleID; correlate via crew health facts in application if needed
+    CrewSymptoms( eyeIrritation == true )
 then
     Finding finding = new Finding("Chemical irritants present", $moduleId,
         "Chemical irritants detected in module " + $moduleId, "MEDIUM");
@@ -38,12 +43,15 @@ end
 rule "Hypoxia confirmed - diagnose"
     agenda-group "diagnose.health"
 when
+    // bind module from provided Environment fact
+    $env: Environment( $moduleId : moduleID )
     eval(!findingsService.hasActiveFinding($moduleId, "Hypoxia confirmed"))
-    Finding( type == "Risk of hypoxia", $moduleId : moduleId )
+    not Finding( type == "Hypoxia confirmed", moduleId == $moduleId )
+    Finding( type == "Risk of hypoxia", moduleId == $moduleId )
     and (
-        Vitals( moduleId == $moduleId, spo2 < 90 )
-        or CrewSymptoms( moduleId == $moduleId, shortnessOfBreath == true )
-        or CrewSymptoms( moduleId == $moduleId, dizziness == true )
+        Vitals( spo2 < 90 )
+        or CrewSymptoms( shortnessOfBreath == true )
+        or CrewSymptoms( dizziness == true )
     )
 then
     Finding finding = new Finding("Hypoxia confirmed", $moduleId,
@@ -54,8 +62,11 @@ end
 rule "Cause of hypoxia: ventilation degraded - diagnose"
     agenda-group "diagnose.health"
 when
+    // bind module from provided Environment fact
+    $env: Environment( $moduleId : moduleID )
     eval(!findingsService.hasActiveFinding($moduleId, "Cause of hypoxia: poor ventilation"))
-    Finding( type == "Hypoxia confirmed", $moduleId : moduleId )
+    not Finding( type == "Cause of hypoxia: poor ventilation", moduleId == $moduleId )
+    Finding( type == "Hypoxia confirmed", moduleId == $moduleId )
     VentilationStatus( moduleID == $moduleId, degraded == true )
 then
     Finding finding = new Finding("Cause of hypoxia: poor ventilation", $moduleId,
@@ -66,8 +77,11 @@ end
 rule "Dangerous air quality in module - diagnose"
     agenda-group "diagnose.health"
 when
+    // bind module from provided Environment fact
+    $env: Environment( $moduleId : moduleID )
     eval(!findingsService.hasActiveFinding($moduleId, "Dangerous air quality in module"))
-    Finding( type == "Chemical irritants present", $moduleId : moduleId )
+    not Finding( type == "Dangerous air quality in module", moduleId == $moduleId )
+    Finding( type == "Chemical irritants present", moduleId == $moduleId )
     VentilationStatus( moduleID == $moduleId, degraded == true )
 then
     Finding finding = new Finding("Dangerous air quality in module", $moduleId,

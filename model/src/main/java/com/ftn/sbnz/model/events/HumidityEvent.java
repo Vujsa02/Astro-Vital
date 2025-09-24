@@ -23,6 +23,12 @@ public class HumidityEvent {
     this.timestamp = System.currentTimeMillis();
   }
 
+  public HumidityEvent(double humidity, String moduleId, long timestamp) {
+    this.humidity = humidity;
+    this.moduleId = moduleId;
+    this.timestamp = timestamp;
+  }
+
   public long getTimestamp() {
     return timestamp;
   }
@@ -45,5 +51,14 @@ public class HumidityEvent {
 
   public void setModuleId(String moduleId) {
     this.moduleId = moduleId;
+  }
+
+  @Override
+  public String toString() {
+    return "HumidityEvent{" +
+        "timestamp=" + timestamp +
+        ", humidity=" + humidity +
+        ", moduleId='" + moduleId + '\'' +
+        '}';
   }
 }
