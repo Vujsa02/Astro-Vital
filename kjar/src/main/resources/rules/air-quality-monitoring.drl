@@ -1,0 +1,89 @@
+package rules;
+
+import com.ftn.sbnz.model.events.AirQualityEvent;
+import com.ftn.sbnz.model.models.Environment;
+import com.ftn.sbnz.model.models.Finding;
+import com.ftn.sbnz.model.utils.AirQualityStats;
+
+// CEP-2: Ako VOC ili PM imaju više epizoda/skokova u poslednja 24 h, onda => Epizodično zagađenje vazduha.
+
+// Query to get episodic contamination results
+query "getEpisodicContamination"
+    Finding(type == "Episodic Air Contamination", $moduleId : moduleId, $details : details, $priority : priority)
+end
+
+// ============================================================================
+// CEP-2: EPISODIC AIR CONTAMINATION DETECTION
+// ============================================================================
+
+rule "CEP-2 - Multiple VOC/PM episodes in 24h -> Episodic air contamination"
+    agenda-group "cep.air-quality"
+    salience 1100
+    when
+        $env : Environment($moduleId : moduleID)
+        
+        // Collect all air quality events for this module in last 24 hours
+        $airEvents : java.util.List() from collect( 
+            AirQualityEvent(moduleId == $moduleId) over window:time(24h) 
+        )
+        
+        // Logic in when: check for multiple episodes using helper
+        // VOC threshold: 50.0 ppm, PM threshold: 35.0 μg/m³, minimum 3 episodes
+        eval( AirQualityStats.hasMultipleEpisodes($airEvents, 50.0, 35.0, 3) )
+        
+        // Ensure we don't create duplicate findings
+        not Finding(type == "Episodic Air Contamination", moduleId == $moduleId)
+        
+    then
+        // Get episode count and latest event for detailed evidence
+        int episodeCount = AirQualityStats.getEpisodeCount($airEvents, 50.0, 35.0);
+        AirQualityEvent latestEvent = AirQualityStats.getLatestEvent($airEvents);
+        
+        String evidence = "Detected " + episodeCount + " VOC/PM episodes in 24h window. ";
+        if (latestEvent != null) {
+            evidence += "Latest: VOC=" + latestEvent.getVocLevel() + "ppm, PM=" + latestEvent.getPmLevel() + "μg/m³";
+        }
+        
+        // Action: Insert episodic contamination finding
+        Finding contamination = new Finding("Episodic Air Contamination", $moduleId, evidence, "HIGH");
+        insert(contamination);
+        
+        System.out.println("CEP-2 TRIGGERED: Episodic air contamination detected in module " + $moduleId + 
+                          " - " + episodeCount + " episodes in 24h");
+end
+
+rule "CEP-2 - Clear episodic contamination when episodes drop"
+    agenda-group "cep.air-quality"
+    salience 1050
+    when
+        $finding : Finding(type == "Episodic Air Contamination", $moduleId : moduleId)
+        $env : Environment(moduleID == $moduleId)
+        
+        // Collect current air quality events for this module in last 24 hours
+        $airEvents : java.util.List() from collect( 
+            AirQualityEvent(moduleId == $moduleId) over window:time(24h) 
+        )
+        
+        // Check if episodes have dropped below threshold
+        eval( !AirQualityStats.hasMultipleEpisodes($airEvents, 50.0, 35.0, 3) )
+        
+    then
+        retract($finding);
+        System.out.println("CEP-2 CLEARED: Episodic air contamination cleared in module " + $moduleId + 
+                          " - episodes dropped below threshold");
+end
+
+rule "CEP-2 - Log air quality episodes for monitoring"
+    agenda-group "cep.air-quality" 
+    salience 900
+    when
+        $event : AirQualityEvent($moduleId : moduleId, $voc : vocLevel, $pm : pmLevel)
+        
+        // Log high VOC or PM episodes
+        eval($voc >= 50.0 || $pm >= 35.0)
+        
+    then
+        System.out.println("AIR QUALITY EPISODE in module " + $moduleId + 
+                          ": VOC=" + $voc + "ppm, PM=" + $pm + "μg/m³ at " + 
+                          new java.util.Date($event.getTimestamp()));
+end

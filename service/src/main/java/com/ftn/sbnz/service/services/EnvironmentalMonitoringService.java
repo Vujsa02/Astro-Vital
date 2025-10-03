@@ -7,6 +7,7 @@ import com.ftn.sbnz.model.models.WaterRecycling;
 import com.ftn.sbnz.model.models.VentilationStatus;
 import com.ftn.sbnz.model.models.Finding;
 import com.ftn.sbnz.model.events.HumidityEvent;
+import com.ftn.sbnz.model.events.AirQualityEvent;
 import com.ftn.sbnz.model.dto.EnvironmentalAnalysisResult;
 
 import org.kie.api.runtime.KieContainer;
