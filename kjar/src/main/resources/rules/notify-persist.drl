@@ -1,4 +1,4 @@
-package healthmonitoring
+package rules
 
 import com.ftn.sbnz.model.models.Finding
 import com.ftn.sbnz.service.services.FindingsService
