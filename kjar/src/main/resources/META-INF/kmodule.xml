@@ -1,4 +1,11 @@
 <kmodule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xmlns="http://jboss.org/kie/6.0.0/kmodule">
 
+<kbase name="defaultKieBase" eventProcessingMode="stream">
+  <!-- Provide a default stateful KieSession so calls to KieContainer.newKieSession()
+       will succeed. Keeping the KieBase package-agnostic (no packages attr)
+       allows all rule files to be included. -->
+  <ksession name="defaultKieSession" type="stateful" default="true"/>
+</kbase>
+
 </kmodule>
