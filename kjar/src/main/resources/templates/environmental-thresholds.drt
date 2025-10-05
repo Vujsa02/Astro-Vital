@@ -1,0 +1,38 @@
+template header
+parameter
+operator
+threshold
+duration
+moduleId
+alarmType
+priority
+description
+
+package com.ftn.sbnz.kjar.rules.templates;
+
+import com.ftn.sbnz.model.models.Environment;
+import com.ftn.sbnz.model.models.Finding;
+
+template "EnvironmentalThreshold"
+
+rule "Environmental Alarm - @{alarmType} in @{moduleId}_@{row.rowNumber}"
+no-loop true
+when
+    $env: Environment(
+        moduleID == "@{moduleId}",
+        @{parameter} @{operator} @{threshold}
+    )
+    // Note: Duration logic would be handled by CEP or separate time-based rules
+then
+    Finding finding = new Finding(
+        "@{alarmType}", 
+        "@{moduleId}", 
+        "@{description} - Threshold: @{threshold}",
+        "@{priority}"
+    );
+    insert(finding);
+    System.out.println("ENVIRONMENTAL TEMPLATE RULE FIRED: " + finding.getType() + " in module " + finding.getModuleId() + 
+                       " - @{parameter} @{operator} @{threshold}");
+end
+
+end template

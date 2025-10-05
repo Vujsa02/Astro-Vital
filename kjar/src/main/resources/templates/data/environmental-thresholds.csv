@@ -1,0 +1,13 @@
+parameter,operator,threshold,duration,moduleId,alarmType,priority,description
+o2Level,<,19.5,2m,LAB,Low O2,HIGH,Oxygen level critically low
+co2Level,>,1000,5m,LAB,High CO2,HIGH,Carbon dioxide level too high  
+temperature,>,28,10m,LAB,High Temperature,MEDIUM,Temperature exceeds safe limits
+humidity,<,30,15m,LAB,Low Humidity,MEDIUM,Humidity too low for comfort
+pressure,<,95,30s,LAB,Low Pressure,CRITICAL,Pressure drop detected
+vocLevel,>,50,1h,LAB,High VOC,MEDIUM,Volatile compounds elevated
+o2Level,<,19.5,2m,HABITAT,Low O2,HIGH,Oxygen level critically low in habitat
+co2Level,>,1000,5m,HABITAT,High CO2,HIGH,Carbon dioxide level too high in habitat
+temperature,>,30,10m,HABITAT,High Temperature,MEDIUM,Temperature exceeds comfort zone in habitat
+humidity,>,80,6h,HABITAT,High Humidity,MEDIUM,High humidity detected in habitat
+coLevel,>,10,1m,HABITAT,CO Detected,CRITICAL,Carbon monoxide detected
+pressure,<,98,1m,COMMAND,Low Pressure,HIGH,Low pressure in command module
