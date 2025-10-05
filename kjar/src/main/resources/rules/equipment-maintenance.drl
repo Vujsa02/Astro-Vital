@@ -1,4 +1,4 @@
-package equipmentmaintenance
+package rules
 
 import com.ftn.sbnz.model.models.Environment
 import com.ftn.sbnz.model.models.VentilationStatus
