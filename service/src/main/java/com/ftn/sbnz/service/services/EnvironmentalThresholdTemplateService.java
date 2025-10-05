@@ -10,6 +10,7 @@ import org.kie.api.io.ResourceType;
 import org.kie.api.runtime.KieSession;
 import org.kie.internal.utils.KieHelper;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.ftn.sbnz.model.models.Environment;
 import com.ftn.sbnz.model.models.EnvironmentalThresholdTemplateModel;
@@ -21,9 +22,17 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collections;
 
 @Service
 public class EnvironmentalThresholdTemplateService {
+
+    private final FindingsService findingsService;
+
+    @Autowired
+    public EnvironmentalThresholdTemplateService(FindingsService findingsService) {
+        this.findingsService = findingsService;
+    }
 
     /**
      * Generates DRL rules from environmental threshold template using CSV data.
@@ -127,6 +136,23 @@ public class EnvironmentalThresholdTemplateService {
         }
 
         kieSession.dispose();
+        // Persist findings into FindingsService if not already present (dedupe)
+        try {
+            for (Finding f : findings) {
+                try {
+                    if (!findingsService.hasActiveFinding(f.getModuleId(), f.getType())) {
+                        findingsService.addFindings(f.getModuleId(), Collections.singletonList(f));
+                    }
+                } catch (Exception ex) {
+                    System.out.println(
+                            "EnvironmentalThresholdTemplateService: Failed to persist finding: " + ex.getMessage());
+                }
+            }
+        } catch (Exception e) {
+            System.out.println(
+                    "EnvironmentalThresholdTemplateService: Error while persisting findings: " + e.getMessage());
+        }
+
         return findings;
     }
 
@@ -159,6 +185,23 @@ public class EnvironmentalThresholdTemplateService {
         }
 
         kieSession.dispose();
+        // Persist findings into FindingsService if not already present (dedupe)
+        try {
+            for (Finding f : findings) {
+                try {
+                    if (!findingsService.hasActiveFinding(f.getModuleId(), f.getType())) {
+                        findingsService.addFindings(f.getModuleId(), Collections.singletonList(f));
+                    }
+                } catch (Exception ex) {
+                    System.out.println(
+                            "EnvironmentalThresholdTemplateService: Failed to persist finding: " + ex.getMessage());
+                }
+            }
+        } catch (Exception e) {
+            System.out.println(
+                    "EnvironmentalThresholdTemplateService: Error while persisting findings: " + e.getMessage());
+        }
+
         return findings;
     }
 
@@ -203,29 +246,61 @@ public class EnvironmentalThresholdTemplateService {
     public List<EnvironmentalThresholdTemplateModel> getDefaultAstroVitalThresholds() {
         List<EnvironmentalThresholdTemplateModel> thresholds = new ArrayList<>();
 
-        // LAB module thresholds
-        thresholds.add(new EnvironmentalThresholdTemplateModel(
-                "o2Level", "<", 19.5, "2m", "LAB", "Low O2", "HIGH", "Oxygen level critically low"));
-        thresholds.add(new EnvironmentalThresholdTemplateModel(
-                "co2Level", ">", 1000.0, "5m", "LAB", "High CO2", "HIGH", "Carbon dioxide level too high"));
-        thresholds.add(new EnvironmentalThresholdTemplateModel(
-                "temperature", ">", 28.0, "10m", "LAB", "High Temperature", "MEDIUM",
-                "Temperature exceeds safe limits"));
-        thresholds.add(new EnvironmentalThresholdTemplateModel(
-                "pressure", "<", 95.0, "30s", "LAB", "Low Pressure", "CRITICAL", "Pressure drop detected"));
+        try {
+            List<String[]> rows = readCsvData();
+            for (String[] cols : rows) {
+                // Expecting CSV columns:
+                // parameter,operator,threshold,duration,moduleId,alarmType,priority,description
+                if (cols.length < 8)
+                    continue;
+                String parameter = cols[0];
+                String operator = cols[1];
+                String thresholdStr = cols[2];
+                String duration = cols[3];
+                String moduleId = cols[4];
+                String alarmType = cols[5];
+                String priority = cols[6];
+                String description = cols[7];
 
-        // HABITAT module thresholds
-        thresholds.add(new EnvironmentalThresholdTemplateModel(
-                "o2Level", "<", 19.5, "2m", "HABITAT", "Low O2", "HIGH", "Oxygen level critically low in habitat"));
-        thresholds.add(new EnvironmentalThresholdTemplateModel(
-                "vocLevel", ">", 50.0, "1h", "HABITAT", "High VOC", "MEDIUM",
-                "Volatile compounds elevated in habitat"));
-        thresholds.add(new EnvironmentalThresholdTemplateModel(
-                "coLevel", ">", 10.0, "1m", "HABITAT", "CO Detected", "CRITICAL", "Carbon monoxide detected"));
+                double thr = 0.0;
+                try {
+                    thr = Double.parseDouble(thresholdStr);
+                } catch (NumberFormatException nfe) {
+                    // keep as 0.0 if parse fails
+                }
 
-        // COMMAND module thresholds
-        thresholds.add(new EnvironmentalThresholdTemplateModel(
-                "pressure", "<", 98.0, "1m", "COMMAND", "Low Pressure", "HIGH", "Low pressure in command module"));
+                thresholds.add(new EnvironmentalThresholdTemplateModel(
+                        parameter, operator, thr, duration, moduleId, alarmType, priority, description));
+            }
+        } catch (IOException e) {
+            // Fall back to hard-coded defaults if CSV cannot be read
+            System.out.println("EnvironmentalThresholdTemplateService: Failed to read CSV for default thresholds: "
+                    + e.getMessage());
+
+            // LAB module thresholds
+            thresholds.add(new EnvironmentalThresholdTemplateModel(
+                    "o2Level", "<", 19.5, "2m", "LAB", "Low O2", "HIGH", "Oxygen level critically low"));
+            thresholds.add(new EnvironmentalThresholdTemplateModel(
+                    "co2Level", ">", 1000.0, "5m", "LAB", "High CO2", "HIGH", "Carbon dioxide level too high"));
+            thresholds.add(new EnvironmentalThresholdTemplateModel(
+                    "temperature", ">", 28.0, "10m", "LAB", "High Temperature", "MEDIUM",
+                    "Temperature exceeds safe limits"));
+            thresholds.add(new EnvironmentalThresholdTemplateModel(
+                    "pressure", "<", 95.0, "30s", "LAB", "Low Pressure", "CRITICAL", "Pressure drop detected"));
+
+            // HABITAT module thresholds
+            thresholds.add(new EnvironmentalThresholdTemplateModel(
+                    "o2Level", "<", 19.5, "2m", "HABITAT", "Low O2", "HIGH", "Oxygen level critically low in habitat"));
+            thresholds.add(new EnvironmentalThresholdTemplateModel(
+                    "vocLevel", ">", 50.0, "1h", "HABITAT", "High VOC", "MEDIUM",
+                    "Volatile compounds elevated in habitat"));
+            thresholds.add(new EnvironmentalThresholdTemplateModel(
+                    "coLevel", ">", 10.0, "1m", "HABITAT", "CO Detected", "CRITICAL", "Carbon monoxide detected"));
+
+            // COMMAND module thresholds
+            thresholds.add(new EnvironmentalThresholdTemplateModel(
+                    "pressure", "<", 98.0, "1m", "COMMAND", "Low Pressure", "HIGH", "Low pressure in command module"));
+        }
 
         return thresholds;
     }

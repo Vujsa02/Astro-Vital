@@ -18,29 +18,27 @@ Dugotrajne misije u svemiru podrazumevaju rad u sredini gde i najmanji kvar ili 
 
 Autonomni sistemi koji primenjuju ekspertske metode donošenja odluka predstavljaju korak ka većoj samostalnosti posade i povećanju pouzdanosti infrastrukture u svemirskim misijama. Njihova sposobnost da kombinuju podatke iz više izvora, prepoznaju složene obrasce i reaguju u skladu sa definisanim pravilima, značajno smanjuje rizik i podiže nivo bezbednosti.
 
-
 # 2. OPIS PROBLEMA
 
 ## 2.1 Nedostaci postojećih rešenja
 
 Postojeći sistemi za upravljanje uslovima života u svemirskim staništima uglavnom su zasnovani na klasičnim SCADA i alarmnim mehanizmima koji imaju sledeća ograničenja:
 
-* **Reaktivan pristup** – alarmi se aktiviraju tek nakon što parametri pređu kritične granice, bez mogućnosti predviđanja kvara na osnovu trendova.
-* **Nedostatak integracije podataka** – zdravstveni podaci članova posade i tehnički parametri staništa se obrađuju odvojeno, što otežava dobijanje kompletne slike stanja.
-* **Zavisnost od kontrole sa Zemlje** – složene odluke često donosi tim na Zemlji, što u uslovima kašnjenja komunikacije može odložiti reakciju.
-* **Ograničena automatizacija** – sistemi nemaju mogućnost autonomnog izvođenja korektivnih mera, već se oslanjaju na ručnu intervenciju.
-* **Nedostatak složene logike odlučivanja** – pravila su jednostavna i zasnovana samo na pojedinačnim prag vrednostima, bez kombinovanja više parametara ili analiza obrazaca događaja.
+- **Reaktivan pristup** – alarmi se aktiviraju tek nakon što parametri pređu kritične granice, bez mogućnosti predviđanja kvara na osnovu trendova.
+- **Nedostatak integracije podataka** – zdravstveni podaci članova posade i tehnički parametri staništa se obrađuju odvojeno, što otežava dobijanje kompletne slike stanja.
+- **Zavisnost od kontrole sa Zemlje** – složene odluke često donosi tim na Zemlji, što u uslovima kašnjenja komunikacije može odložiti reakciju.
+- **Ograničena automatizacija** – sistemi nemaju mogućnost autonomnog izvođenja korektivnih mera, već se oslanjaju na ručnu intervenciju.
+- **Nedostatak složene logike odlučivanja** – pravila su jednostavna i zasnovana samo na pojedinačnim prag vrednostima, bez kombinovanja više parametara ili analiza obrazaca događaja.
 
 ## 2.2 Ciljevi i inovativnost našeg rešenja
 
 Cilj razvoja sistema **AstroVital** je da obezbedi sveobuhvatno, inteligentno i autonomno upravljanje uslovima života u svemirskom staništu, sa sledećim ključnim karakteristikama:
 
-* **Integracija više izvora podataka** – spajanje informacija sa senzora, nosivih uređaja i ručnih unosa posade u jedinstvenu bazu znanja.
-* **Primena naprednih metoda rezonovanja** – kombinacija forward chaining (sa najmanje 3 nivoa), backward chaining za dijagnostiku i CEP (Complex Event Processing) za prepoznavanje obrazaca tokom vremena.
-* **Automatske i poluautomatske korektivne mere** – sistem može samostalno prilagoditi parametre (npr. temperaturu, protok vazduha, nivo vlage) ili predložiti akciju članu posade.
-* **Interaktivnost sa korisnicima** – pružanje preporuka sa obrazloženjem "zašto" je doneta odluka, kao i mogućnost da korisnici unesu dodatne informacije koje utiču na rezonovanje.
-* **Prilagodljivost i nadogradivost** – menadžer baze znanja može lako kreirati, menjati i testirati pravila, čime se sistem prilagođava novim uslovima misije.
-
+- **Integracija više izvora podataka** – spajanje informacija sa senzora, nosivih uređaja i ručnih unosa posade u jedinstvenu bazu znanja.
+- **Primena naprednih metoda rezonovanja** – kombinacija forward chaining (sa najmanje 3 nivoa), backward chaining za dijagnostiku i CEP (Complex Event Processing) za prepoznavanje obrazaca tokom vremena.
+- **Automatske i poluautomatske korektivne mere** – sistem može samostalno prilagoditi parametre (npr. temperaturu, protok vazduha, nivo vlage) ili predložiti akciju članu posade.
+- **Interaktivnost sa korisnicima** – pružanje preporuka sa obrazloženjem "zašto" je doneta odluka, kao i mogućnost da korisnici unesu dodatne informacije koje utiču na rezonovanje.
+- **Prilagodljivost i nadogradivost** – menadžer baze znanja može lako kreirati, menjati i testirati pravila, čime se sistem prilagođava novim uslovima misije.
 
 # 3. FUNKCIONALNOSTI I KORISNICI
 
@@ -48,83 +46,82 @@ Sistem AstroVital je dizajniran sa tri jasno definisane korisničke uloge. Svako
 
 ## 3.1. Član posade (Crew Member)
 
-* **Rad sa alarmima:**
+- **Rad sa alarmima:**
 
-  * Pregled aktivnih, kritičnih i informacionih alarma u svom modulu.
-  * Potvrda alarma (acknowledge) uz evidentiranje vremena i identifikatora.
-  * Pristup uputstvima za reagovanje, prilagođenim tipu alarma i ozbiljnosti situacije.
+  - Pregled aktivnih, kritičnih i informacionih alarma u svom modulu.
+  - Potvrda alarma (acknowledge) uz evidentiranje vremena i identifikatora.
+  - Pristup uputstvima za reagovanje, prilagođenim tipu alarma i ozbiljnosti situacije.
 
-* **Zdravstveni nadzor:**
+- **Zdravstveni nadzor:**
 
-  * Unos zdravstvenih simptoma (izbor sa liste: vrtoglavica, glavobolja, kratkoća daha, umor, iritacija očiju itd.).
-  * Pregled istorije unetih simptoma i povezanih preporuka sistema.
-  * Dobijanje prilagođenih preporuka na osnovu kombinacije senzorskih i medicinskih podataka.
+  - Unos zdravstvenih simptoma (izbor sa liste: vrtoglavica, glavobolja, kratkoća daha, umor, iritacija očiju itd.).
+  - Pregled istorije unetih simptoma i povezanih preporuka sistema.
+  - Dobijanje prilagođenih preporuka na osnovu kombinacije senzorskih i medicinskih podataka.
 
-* **Upravljanje sistemom u modulu:**
+- **Upravljanje sistemom u modulu:**
 
-  * Postavljanje vrednosti parametara u modulu (temperatura (°C), protok vazduha (%), vlažnost (%)...).
-  * Pregled trenutnog stanja podsistema (ventilacija, klimatska kontrola, CO₂ skruber, generator kiseonika).
-  * Pristup kratkim izveštajima o radu sistema u poslednjem periodu.
+  - Postavljanje vrednosti parametara u modulu (temperatura (°C), protok vazduha (%), vlažnost (%)...).
+  - Pregled trenutnog stanja podsistema (ventilacija, klimatska kontrola, CO₂ skruber, generator kiseonika).
+  - Pristup kratkim izveštajima o radu sistema u poslednjem periodu.
 
-* **Izveštaji iz opservacije:**
+- **Izveštaji iz opservacije:**
 
-  * Prijavljivanje vizuelnih nepravilnosti (kondezacija, led, oštećenja).
-  * Prijavljivanje akustičnih signala (zviždanje, šištanje, lupkanje) i mirisa (dim, hemikalije).
+  - Prijavljivanje vizuelnih nepravilnosti (kondezacija, led, oštećenja).
+  - Prijavljivanje akustičnih signala (zviždanje, šištanje, lupkanje) i mirisa (dim, hemikalije).
 
 ## 3.2. Inženjer životne sredine (Life Support Engineer)
 
-* **Rad sa alarmima:**
+- **Rad sa alarmima:**
 
-  * Pregled svih alarma u svim modulima, sa filterom po ozbiljnosti i vremenu.
-  * Kreiranje novih alarma na osnovu rezultata inspekcije ili analize podataka.
-  * Ažuriranje ili brisanje postojećih alarma koji nisu relevantni.
+  - Pregled svih alarma u svim modulima, sa filterom po ozbiljnosti i vremenu.
+  - Kreiranje novih alarma na osnovu rezultata inspekcije ili analize podataka.
+  - Ažuriranje ili brisanje postojećih alarma koji nisu relevantni.
 
-* **Nadzor i održavanje sistema:**
+- **Nadzor i održavanje sistema:**
 
-  * Unos rezultata vizuelnih inspekcija (filteri, cevovodi, konektori).
-  * Evidentiranje zamene delova (filteri, pumpe, ventilatori) sa datumom i opisom.
-  * Unos rezultata kalibracije senzora (datum, izlazna vrednost, odstupanje).
-  * Procena preostalog kapaciteta sistema i potrebe za preventivnim održavanjem.
+  - Unos rezultata vizuelnih inspekcija (filteri, cevovodi, konektori).
+  - Evidentiranje zamene delova (filteri, pumpe, ventilatori) sa datumom i opisom.
+  - Unos rezultata kalibracije senzora (datum, izlazna vrednost, odstupanje).
+  - Procena preostalog kapaciteta sistema i potrebe za preventivnim održavanjem.
 
-* **Upravljanje parametrima sistema:**
+- **Upravljanje parametrima sistema:**
 
-  * Podešavanje ciljne temperature u pojedinačnim ili svim modulima.
-  * Podešavanje ciljnog pritiska unutar modula.
-  * Regulisanje protoka vazduha i nivoa vlažnosti.
+  - Podešavanje ciljne temperature u pojedinačnim ili svim modulima.
+  - Podešavanje ciljnog pritiska unutar modula.
+  - Regulisanje protoka vazduha i nivoa vlažnosti.
 
-* **Analiza i izveštavanje:**
+- **Analiza i izveštavanje:**
 
-  * Pregled trendova rada podsistema i upoređivanje sa istorijskim podacima.
-  * Generisanje izveštaja o statusu sistema za određeni vremenski period.
-  * Dobijanje preporuka za održavanje na osnovu analize sistema.
+  - Pregled trendova rada podsistema i upoređivanje sa istorijskim podacima.
+  - Generisanje izveštaja o statusu sistema za određeni vremenski period.
+  - Dobijanje preporuka za održavanje na osnovu analize sistema.
 
 ## 3.3. Menadžer baze znanja (Knowledge Base Manager)
 
-* **Upravljanje pravilima:**
+- **Upravljanje pravilima:**
 
-  * Kreiranje novih pravila u Drools bazi znanja.
-  * Izmena i optimizacija postojećih pravila na osnovu rezultata rada sistema.
-  * Brisanje zastarelih ili neefikasnih pravila.
+  - Kreiranje novih pravila u Drools bazi znanja.
+  - Izmena i optimizacija postojećih pravila na osnovu rezultata rada sistema.
+  - Brisanje zastarelih ili neefikasnih pravila.
 
-* **Podešavanje pragova i prioriteta:**
+- **Podešavanje pragova i prioriteta:**
 
-  * Definisanje pragova senzora za alarme i preporuke.
-  * Podešavanje prioriteta alarma po tipu i kritičnosti.
+  - Definisanje pragova senzora za alarme i preporuke.
+  - Podešavanje prioriteta alarma po tipu i kritičnosti.
 
-* **Testiranje i simulacije:**
+- **Testiranje i simulacije:**
 
-  * Pokretanje simulacija različitih scenarija rada sistema.
-  * Analiza rezultata testova i merenje efikasnosti pravila.
-  * Beleženje i arhiviranje rezultata radi kasnije analize.
+  - Pokretanje simulacija različitih scenarija rada sistema.
+  - Analiza rezultata testova i merenje efikasnosti pravila.
+  - Beleženje i arhiviranje rezultata radi kasnije analize.
 
-* **Optimizacija sistema:**
+- **Optimizacija sistema:**
 
-  * Na osnovu rezultata simulacija i statistike alarma, sistem predlaže izmene pragova ili prioriteta.
-  * Unošenje odobrenih izmena u bazu znanja i konfiguraciju sistema.
+  - Na osnovu rezultata simulacija i statistike alarma, sistem predlaže izmene pragova ili prioriteta.
+  - Unošenje odobrenih izmena u bazu znanja i konfiguraciju sistema.
 
-* **Upravljanje korisnicima:**
-  * Registracija drugih korisnika sistema (članova posade i inženjera životne sredine).
-
+- **Upravljanje korisnicima:**
+  - Registracija drugih korisnika sistema (članova posade i inženjera životne sredine).
 
 # 4. METODOLOGIJA
 
@@ -143,71 +140,60 @@ Rad sistema obuhvata:
 
 Ulazni podaci predstavljaju sve informacije koje sistem prima radi obrade, procene stanja i donošenja odluka. Dele se u dve glavne grupe:
 
-* **Automatski prikupljeni podaci** – dobijeni preko senzora, pametnih uređaja i sistema za nadzor.
-* **Ručno uneti podaci** – koje unose korisnici sistema u skladu sa svojom ulogom.
+- **Automatski prikupljeni podaci** – dobijeni preko senzora, pametnih uređaja i sistema za nadzor.
+- **Ručno uneti podaci** – koje unose korisnici sistema u skladu sa svojom ulogom.
 
 ### Automatski prikupljeni podaci
 
-* **Podaci o čoveku (Član posade – Crew Member):**
+- **Podaci o čoveku (Član posade – Crew Member):**
 
-  * Puls (bpm)
-  * Krvni pritisak (mmHg)
-  * Zasićenost kiseonikom – SpO₂ (%)
-  * Respiratorna frekvencija (udisaja/min)
-  * Telesna temperatura (°C)
-  * Nivo aktivnosti (sedentarno, umereno, intenzivno)
+  - Puls (bpm)
+  - Krvni pritisak (mmHg)
+  - Zasićenost kiseonikom – SpO₂ (%)
+  - Respiratorna frekvencija (udisaja/min)
+  - Telesna temperatura (°C)
+  - Nivo aktivnosti (sedentarno, umereno, intenzivno)
 
-* **Podaci o staništu (senzori i sistemi):**
+- **Podaci o staništu (senzori i sistemi):**
 
-  * Atmosferski uslovi:
-    * Nivo kiseonika (O₂, %)
-    * Nivo ugljen-dioksida (CO₂, ppm)
-    * Temperatura (°C)
-    * Vlažnost (%)
-    * Atmosferski pritisak (kPa)
+  - Atmosferski uslovi:
 
-  * Status podsistema:
-    * Ventilacija
-    * Klimatska kontrola
-    * Generator kiseonika
-    * CO₂ skruber
-    * Sistem za reciklažu vode
-    * Distribucija energije
+    - Nivo kiseonika (O₂, %)
+    - Nivo ugljen-dioksida (CO₂, ppm)
+    - Nivo ugljen-monoksida (CO, ppm)
+    - Temperatura (°C)
+    - Vlažnost (%)
+    - Atmosferski pritisak (kPa)
+    - VOC nivo (ppm)
+    - PM nivo (μg/m³)
 
-  * Obrađeni trendovi:
-    * Promena gasova u vremenu
-    * Nagli pad pritiska (rizik od dekompresije)
-    * Anomalno visoka frekvencija alarma (“alarm storm”)
+  - Status podsistema:
+
+    - Ventilacija
+    - Klimatska kontrola
+    - Sistem za reciklažu vode
+
+  - Obrađeni trendovi:
+    - Visoka vlažnost u periodu od 6h
+    - Epizodično zagađenje vazduha u periodu od 24h
 
 ### Ručno uneti podaci
 
-* **Član posade (Crew Member):**
+- **Član posade (Crew Member):**
 
-  * Zdravstveni simptomi – izbor iz liste (vrtoglavica, glavobolja, kratkoća daha, umor, iritacija očiju.)
-  * Potvrda alarma – beleženje vremena i ID-a alarma nakon pregleda
-  * Podešavanje parametara u modulu – postavljanje temperature (°C), protoka vazduha (%) i vlažnosti (%)
-  * Izveštaji iz opservacije – prijavljivanje vizuelnih nepravilnosti (kondezacija, led, oštećenja), zvukova (zviždanje, šištanje, lupkanje) i mirisa (dim, hemikalije)
+  - Zdravstveni simptomi – izbor iz liste (vrtoglavica, glavobolja, kratkoća daha, umor, iritacija očiju.)
 
-* **Inženjer životne podrške (Life Support Engineer):**
+- **Menadžer baze znanja (Knowledge Base Manager):**
 
-  * Rezultati vizuelnih inspekcija (filteri, cevovodi, konektori)
-  * Detalji o održavanju (datum i opis servisa, zamena delova, rezultati kalibracije)
-  * Procena preostalog kapaciteta sistema (resursi, potrošnja)
-  * Kreiranje novih alarma ili ažuriranje postojećih
-  * Podešavanje parametara (ciljna temperatura, ciljni pritisak, protok vazduha, vlažnost) u pojedinačnim ili svim modulima
-
-* **Menadžer baze znanja (Knowledge Base Manager):**
-
-  * Kreiranje, izmena ili brisanje pravila u Drools bazi znanja
-  * Podešavanje pragova senzora i prioriteta alarma
-  * Pokretanje i beleženje rezultata simulacija i testova
+  - Kreiranje, izmena ili brisanje pravila u Drools bazi znanja
+  - Podešavanje pragova senzora
+  - Pokretanje i beleženje rezultata simulacija i testova
 
 ## 4.2 Činjenice sistema
 
 „Činjenice sistema“ su jasno definisani, proverljivi iskazi o stanju okruženja, podsistema, posade i obrazaca u vremenu. One se koriste kao ulaz u pravila („ako–onda“) i mogu biti neposredno izmerene, prijavljene ili dobijene iz jednostavnih vremenskih prozora (trendovi).
 
-
-**Činjenice vitalnih znakova i simptoma** — mereni parametri posade (SpO₂, puls, RR, T) i subjektivne prijave (vrtoglavica, glavobolja…).  
+**Činjenice vitalnih znakova i simptoma** — mereni parametri posade (SpO₂, puls, RR, T) i subjektivne prijave (vrtoglavica, glavobolja…).
 
 | Činjenica                 | Kratak opis                 |
 | ------------------------- | --------------------------- |
@@ -221,7 +207,7 @@ Ulazni podaci predstavljaju sve informacije koje sistem prima radi obrade, proce
 | Glavobolja prijavljena    | Bol/pritisk u glavi         |
 | Iritacija očiju           | Pečenje/suvoća očiju        |
 
-**Činjenice okruženja** — stanje vazduha i uslova u modulu (O₂, CO₂, temperatura, vlažnost, pritisak, zagađivači).  
+**Činjenice okruženja** — stanje vazduha i uslova u modulu (O₂, CO₂, temperatura, vlažnost, pritisak, zagađivači).
 
 | Činjenica            | Kratak opis                |
 | -------------------- | -------------------------- |
@@ -232,28 +218,13 @@ Ulazni podaci predstavljaju sve informacije koje sistem prima radi obrade, proce
 | Pritisak naglo opada | Brz gubitak pritiska       |
 | CO povišen           | Ugljen-monoksid detektovan |
 
-**Činjenice podsistema** — operativni status opreme (ventilacija, O₂ generator, CO₂ skruber, senzori, filteri, voda/energija).  
+**Činjenice podsistema** — operativni status opreme (ventilacija, O₂ generator, CO₂ skruber, senzori, filteri, voda/energija).
 
-| Činjenica                  | Kratak opis                   |
-| -------------------------- | ----------------------------- |
-| Ventilacija degradirana    | Slab protok vazduha           |
-| O₂ generator ne radi       | Proizvodnja O₂ zaustavljena   |
-| CO₂ skruber zasićen        | Sorbent pun, slaba apsorpcija |
-| Filter vazduha zaprljan    | Povećan otpor/začepljenje     |
-| Senzor „zaglavljen“        | Nema promene očitanja         |
-| Senzor neispravan          | Kalibracija/kvar senzora      |
-| Reciklaža vode degradirana | Slab rad sistema vode         |
-| Dovod energije nestabilan  | Padovi/variranja napajanja    |
-
-**Trendovi (činjenice)** — jednostavni obrasci u vremenu (npr. „CO₂ raste 30 min“, „RH raste 6 h“), korišćeni za rano upozorenje.
-
-| Činjenica             | Kratak opis                     |
-| --------------------- | ------------------------------- |
-| O₂ opada (trend)      | Stalan pad O₂ u vremenu         |
-| CO₂ raste (30 min)    | Stabilan rast CO₂               |
-| RH raste (6 h)        | Dugotrajan porast vlažnosti     |
-| Pritisak opada (30 s) | Brz pad pritiska u kratkom roku |
-| SpO₂ opada (2–6 h)    | Postepen pad zasićenja          |
+| Činjenica                  | Kratak opis               |
+| -------------------------- | ------------------------- |
+| Ventilacija degradirana    | Slab protok vazduha       |
+| Filter vazduha zaprljan    | Povećan otpor/začepljenje |
+| Reciklaža vode degradirana | Slab rad sistema vode     |
 
 ### 4.2.1 Pravila izvedena od činjenica
 
@@ -267,20 +238,13 @@ Ulazni podaci predstavljaju sve informacije koje sistem prima radi obrade, proce
 8. **Filter vazduha zaprljan** ∧ **CO₂ visok** => **Potrebna zamena filtera**
 9. **Temperatura visoka** ∧ (**Puls povišen (HR)** ∨ **RR povišena**) => **Toplotni stres**
 10. **Senzor „zaglavljen“** ∨ **Senzor neispravan** => **Kalibracija senzora potrebna**
-11. **Dovod energije nestabilan** ∧ **O₂ generator ne radi** => **Kritični rizik isporuke O₂**
 
 ### 4.2.2 Forward Chaining
 
-##### **Gubitak životne podrške (O₂):
-
-1. **O₂ generator ne radi** ∧ **Dovod energije nestabilan** => **Nestabilna isporuka O₂**
-2. **Nestabilna isporuka O₂** ∧ **O₂ opada (trend)** => **Gubitak kapaciteta O₂**
-3. **Gubitak kapaciteta O₂** ∧ **SpO₂ nizak** => **Gubitak životne podrške — kritično**
-
 ##### **Hipoksija**
 
-1. Ako je **O₂ nizak** ∨ **CO₂ visok** => **Rizik od hipoksije – faktor (nova činjenica)** 
-2. Ako je **Rizik od hipoksije – faktor** ∧ (**SpO₂ nizak** ∨ **Kratkoća daha prijavljena** ∨ **Vrtoglavica prijavljena**) => **Hipoksija potvrđena (nova činjenica)** 
+1. Ako je **O₂ nizak** ∨ **CO₂ visok** => **Rizik od hipoksije – faktor (nova činjenica)**
+2. Ako je **Rizik od hipoksije – faktor** ∧ (**SpO₂ nizak** ∨ **Kratkoća daha prijavljena** ∨ **Vrtoglavica prijavljena**) => **Hipoksija potvrđena (nova činjenica)**
 3. Ako je **Hipoksija potvrđena** ∧ **Ventilacija degradirana** => **Uzrok hipoksije: nedovoljna ventilacija** (nova dijagnostička činjenica)
 
 ##### **Hemijsko zagađenje / CO incident (od lokalnog do kritičnog)**
@@ -289,138 +253,46 @@ Ulazni podaci predstavljaju sve informacije koje sistem prima radi obrade, proce
 2. **Ukoliko** su **Hemijski iritansi prisutni** **i** **Ventilacija degradirana**, **izvodi se** **Opasan kvalitet vazduha u modulu**.
 3. **Ukoliko** je **Opasan kvalitet vazduha u modulu** **i** **SpO₂ opada (2–6 h)**, **izvodi se** **Kritičan incident vazduha** (stanje koje eskalira protokol za zaštitu posade).
 
-### 4.2.3 Query
-#### 1) Izveštaj o simptomima i vitalnim znacima posade
-
-_Pregled učestalosti simptoma i povezanosti sa vitalnim parametrima._
-
-- **Šta korisnik bira:**
-    - Jedan ili više simptoma: _vrtoglavica, glavobolja, kratak dah, umor_.
-    
-- **Šta izveštaj prikazuje:**
-    - Procenat članova posade kod kojih su se izabrani simptomi javljali tokom misije.
-        
-    - Povezanost simptoma sa vitalnim parametrima: _puls, SpO₂, krvni pritisak, telesna temperatura_ (korelacije i potencijalni uzroci).
-    
-- **Prikaz i filtriranje:**
-    - **Tabele + grafikoni**, sa **filtrima** po vremenskom intervalu i modulu.
-
-#### 2) Izveštaj o uslovima u staništu i radu podsistema
-
-_Istorija okruženja, prekoračenja pragova i statistika kvarova uz povezivanje sa stanjem posade._
-
-- **Šta korisnik bira:**
-    - Parametre okruženja: _O₂, CO₂, temperatura, vlažnost, pritisak_.
-    
-- **Šta izveštaj prikazuje:**
-    - Istorijski pregled vrednosti sa jasno označenim **pragovima** i **prekoračenjima**.
-        
-    - Statistiku kvarova podsistema: _ventilacija, O₂ generator, CO₂ skruber, reciklaža vode_ i njihovu **povezanost sa stanjem posade**.
-        
-    - Broj i tip **kritičnih događaja** koje je detektovao CEP (npr. _Dekompresija potvrđena_, _Epizodično zagađenje vazduha_).
-    
-- **Prikaz i filtriranje:**
-    - **Grafikoni trendova + tabele**, uz filtre po periodu i modulu.
-
-#### 3) Izveštaj o alarmima, reakcijama i dijagnostici sistema
-
-_Analitika alarmnih događaja, odziva posade i rezultata dijagnostike (BC)._
-
-- **Šta korisnik vidi:**
-    - Statistiku svih alarma po tipu: _kritični, upozoravajući, informativni_.
-        
-    - **Prosečno vreme reakcije** posade na kritične alarme.
-        
-    - Evidenciju „**oluja alarma**” i kako je sistem sproveo **grupisanje i prioritizaciju**.
-    
-- **Backward chaining rezultati:**
-    - Koliko puta je sistem potvrdio: _hipoksiju, hemijsko zagađenje, dekompresiju_ — sa **ključnim dokazima** koji su doveli do zaključka.
-    
-- **Prikaz i ocene:**
-    - Rezultati u **procentima i grafikonima**, uz **ocenu tačnosti i efikasnosti** postojećih pravila baze znanja.
-
 ## 4.3 Izlazni podaci
 
 Izlazni podaci predstavljaju informacije koje sistem generiše nakon obrade ulaznih podataka, primene pravila u Drools bazi znanja i izvršavanja predviđenih akcija. Oni se dostavljaju korisnicima u obliku notifikacija, vizuelnih prikaza, izveštaja i preporuka, u skladu sa dodeljenim ulogama.
 
 ### 4.3.1. Član posade (Crew Member)
 
-* **Alarmi i obaveštenja**
+- **Alarmi i obaveštenja**
 
-  * Aktivacija vizuelnih i zvučnih alarma za kritična stanja u sopstvenom modulu.
-  * Prikaz teksta upozorenja i prioriteta alarma.
-  * Istorija alarma sa vremenom aktivacije i potvrde.
+  - Prikaz teksta upozorenja i prioriteta alarma.
+  - Istorija alarma sa vremenom aktivacije i potvrde.
 
-* **Preporuke sistema**
+- **Prikaz statusa modula**
 
-  * Predlozi za optimalno podešavanje temperature, vlažnosti i protoka vazduha.
-  * Instrukcije za reagovanje u slučaju uočenih nepravilnosti.
+  - Trenutne vrednosti temperature, vlažnosti, pritiska i kvaliteta vazduha.
+  - Pristup kratkim izveštajima o radu sistema u poslednjem periodu.
 
-* **Prikaz statusa modula**
+- **Povratna potvrda akcija**
 
-  * Trenutne vrednosti temperature, vlažnosti, pritiska i kvaliteta vazduha.
-  * Istorijski grafici parametara za poslednjih X sati/dana.
-  * Pristup kratkim izveštajima o radu sistema u poslednjem periodu.
-
-* **Povratna potvrda akcija**
-
-  * Potvrda prijema alarma ili izvršene preporuke.
-  * Zapis vremena reakcije.
+  - Potvrda prijema alarma ili izvršene preporuke.
+  - Zapis vremena reakcije.
 
 ### 4.3.2. Inženjer životne podrške (Life Support Engineer)
 
-* **Centralizovani prikaz statusa**
+- **Centralizovani prikaz statusa**
 
-  * Detaljni pregled svih modula i njihovih parametara u realnom vremenu.
-  * Istorijski podaci za sve parametre po modulu.
+  - Detaljni pregled svih modula i njihovih parametara u realnom vremenu.
 
-* **Alarmi i statistika alarma**
+- **Alarmi i statistika alarma**
 
-  * Lista aktivnih alarma sa prioritetima.
-  * Statistika učestalosti po vrsti alarma, modulu i vremenskom periodu.
-  * Pregled vremena reakcije posade na alarme.
-
-* **Izveštaji o održavanju**
-
-  * Pregled rezultata vizuelnih inspekcija.
-  * Istorija zamena delova, servisa i kalibracija senzora.
-  * Procenjeni preostali vek trajanja resursa (npr. filteri, rezervoari).
-
-* **Preporuke za održavanje**
-
-  * Sistemske preporuke za preventivne radnje na osnovu prikupljenih podataka.
-  * Predlozi za izmenu operativnih parametara radi produženja trajanja opreme.
-
-* **Generisanje izveštaja i analiza**
-
-  * Automatski generisani PDF/HTML izveštaji o stanju sistema za određeni period.
-  * Vizuelne analize trendova parametara i alarma.
+  - Lista aktivnih alarma sa prioritetima.
 
 ### 4.3.3. Menadžer baze znanja (Knowledge Base Manager)
 
-* **Analitički pregled sistema**
+- **Analitički pregled sistema**
 
-  * Konsolidovani pregled svih alarma, parametara i korisničkih interakcija.
-  * Indikatori efikasnosti pravila i tačnosti preporuka.
+  - Konsolidovani pregled svih alarma, parametara i korisničkih interakcija.
 
-* **Rezultati simulacija**
+- **Rezultati simulacija**
 
-  * Prikaz ishoda testnih scenarija sa identifikovanim slabim tačkama.
-  * Poređenje više verzija pravila i njihovog učinka.
-
-* **Predlozi za optimizaciju**
-
-  * Automatski generisani predlozi za izmenu pragova, prioriteta ili novih pravila na osnovu statistike alarma i podataka sa terena.
-
-* **Potvrda i primena izmena**
-
-  * Zapis odobrenih izmena u konfiguraciju i bazu znanja.
-  * Istorija svih izmenjenih pravila i pragova.
-
-* **Upravljanje korisničkim nalozima**
-
-  * Potvrda novih registracija.
-  * Istorija izmena privilegija i uloga korisnika.
+  - Prikaz ishoda testnih scenarija sa identifikovanim slabim tačkama.
 
 ## 4.4. Primeri rezonovanja
 
@@ -432,7 +304,6 @@ Primeri pokazuju kompletan tok:
 3. Primenu pravila iz baze znanja kroz forward chaining
 4. Dijagnostičko rezonovanje uz backward chaining
 5. Generisanje alarma, preporuka i izveštaja
-
 
 ### 4.4.1 Glavni scenario: „Kondenzacija i mikrobni rizik u modulu“
 
@@ -449,51 +320,35 @@ _(Ove činjenice dalje „hrane“ forward chaining.)_
 2. **Ako** je **Nakupljanje vlage** **i** (**Epizodično zagađenje vazduha** **ili** **VOC povišen**), **onda** => **Mikrobni uslovi pogodni**.
 3. **Ako** su **Mikrobni uslovi pogodni** **i** (**Iritacija očiju** **ili** **Kašalj prijavljen**), **onda** => **Mikrobni rizik — visok prioritet**.
 
-
 **Tok (sažeto):**  
 CEP-1 => _Kondenzacija aktivna_ => (+ Ventilacija degradirana) => _Nakupljanje vlage_ => (+ VOC/PM) => _Mikrobni uslovi pogodni_ => (+ simptom) => **Mikrobni rizik — visok**.
 
 ##### Backward chaining (kako sistem „traži” potvrde i uzrok)
 
 - **BC cilj 1 — „Postoji li mikrobni rizik — visok?“**  
-    Sistem unazad proverava da li postoje:  
-    (a) _Kondenzacija aktivna_ ili _Nakupljanje vlage_;  
-    (b) _Epizodično zagađenje_ (VOC/PM) ili bar povišen VOC/PM;  
-    (c) _simptomi_ (iritacija očiju ili kašalj).  
-    Ako neki element nedostaje, sistem **zatraži baš taj podatak/merenja**. Kada (a)+(b)+(c) postoje, zaključuje **„Mikrobni rizik — visok prioritet“**.
+   Sistem unazad proverava da li postoje:  
+   (a) _Kondenzacija aktivna_ ili _Nakupljanje vlage_;  
+   (b) _Epizodično zagađenje_ (VOC/PM) ili bar povišen VOC/PM;  
+   (c) _simptomi_ (iritacija očiju ili kašalj).  
+   Ako neki element nedostaje, sistem **zatraži baš taj podatak/merenja**. Kada (a)+(b)+(c) postoje, zaključuje **„Mikrobni rizik — visok prioritet“**.
 
 - **BC cilj 2 — „Gde je izvor vlage?“** (hipoteze i dokazi)
-    
-    - **H1: Reciklaža vode/curenje** -> _Reciklaža vode degradirana_ **i** _vizuelno kondenzat/led na vodnim linijama_.  
-    
-    - **H2: Nedovoljna ventilacija / hladne zone** -> _Ventilacija degradirana_ **i** _T blizu tačke rose_ na zidovima/panelima.  
-    
-    - **H3: Kondenzacija na panelima/mostovi hladnoće** -> _termalne mape pokazuju hladne površine_ **i** _kondenzacija u tim zonama_.  
-    
-    BC u **svakom modulu stanice** prolazi hipoteze redom (H1 → H2 → H3) i **traži ciljane dokaze**.  
-    - Ako se hipoteza potvrdi u modulu → pretraga se zaustavlja i vraća zaključak: **„Izvor vlage potvrđen (H1/H2/H3) u modulu X“**.  
-    - Ako nijedna hipoteza nije potvrđena → BC rekurzivno prelazi na sledeći modul i ponavlja isti postupak.  
-    - Ako se iscrpe svi moduli bez potvrde → vraća se zaključak: **„Izvor vlage nije potvrđen u dostupnim modulima“**.  
 
+  - **H1: Reciklaža vode/curenje** -> _Reciklaža vode degradirana_ **i** _vizuelno kondenzat/led na vodnim linijama_.
+
+  - **H2: Nedovoljna ventilacija / hladne zone** -> _Ventilacija degradirana_ **i** _T blizu tačke rose_ na zidovima/panelima.
+
+  - **H3: Kondenzacija na panelima/mostovi hladnoće** -> _termalne mape pokazuju hladne površine_ **i** _kondenzacija u tim zonama_.
+    BC u **svakom modulu stanice** prolazi hipoteze redom (H1 → H2 → H3) i **traži ciljane dokaze**.
+  - Ako se hipoteza potvrdi u modulu → pretraga se zaustavlja i vraća zaključak: **„Izvor vlage potvrđen (H1/H2/H3) u modulu X“**.
+  - Ako nijedna hipoteza nije potvrđena → BC rekurzivno prelazi na sledeći modul i ponavlja isti postupak.
+  - Ako se iscrpe svi moduli bez potvrde → vraća se zaključak: **„Izvor vlage nije potvrđen u dostupnim modulima“**.
 
 6. **Template-ovi:**
 
-   * Prag-pravila za pritisak, O₂, CO₂ i temperaturu generišu se iz tabele u Drools šablonu
-   * Jedan šablon => desetine pravila (pokazuje skalabilnost)
-   * Primeri:
+   - Prag-pravila za pritisak, O₂, CO₂ i temperaturu generišu se iz tabele u Drools šablonu
+   - Jedan šablon => desetine pravila (pokazuje skalabilnost)
+   - Primeri:
      - „Ako je **O₂ < O2_nizak**(prag) ≥ 2 min, onda → **O₂ nizak**.“
-	 - „Ako je **CO₂ > CO2_visok**(prag) ≥ 5 min, onda → **CO₂ visok**.“
-	 - Ako je **T_površine − T_rose ≤ ΔT_dew tokom ≥ 30 min, onda → **Kondenzacija aktivna**.
-	 - Ako je **VOC ≥ prag** u **≥ 3 epizode/24 h**, onda → **Epizodično zagađenje vazduha**...
 
-### 4.4.2. Mini-scenario — Prioritizacija tokom „oluje alarma“
-
-**Situacija:** U periodu od 5 minuta stiglo je više od 10 alarma iz različitih modula.
-
-* CEP: Pravilo „Oluja alarma“ se aktivira
-* Rezultat:
-
-  * Sistem kreira informativni alarm „Oluja alarma“
-  * Privremeno se prioritizuju kritični alarmi, dok se nebitni grupišu u izveštaj
-  * Inženjer dobija agregatni izveštaj: broj alarma po modulu, najčešći tipovi
-
+   * „Ako je **CO₂ > CO2_visok**(prag) ≥ 5 min, onda → **CO₂ visok**.“

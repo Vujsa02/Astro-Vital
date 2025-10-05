@@ -1,13 +1,34 @@
 parameter,operator,threshold,duration,moduleId,alarmType,priority,description
-o2Level,<,19.5,2m,LAB,Low O2,HIGH,Oxygen level critically low
-co2Level,>,1000,5m,LAB,High CO2,HIGH,Carbon dioxide level too high  
+o2Level,<,19.5,2m,CMD,Critical Low O2,CRITICAL,Oxygen level critically low for Command module
+o2Level,<,20.0,5m,CMD,Low O2,HIGH,Oxygen level below preferred range (warning)
+co2Level,>,0.08,5m,CMD,High CO2,CRITICAL,Carbon dioxide fraction above safe limit
+temperature,>,28,10m,CMD,High Temperature,MEDIUM,Temperature exceeds safe limits
+temperature,<,18,10m,CMD,Low Temperature,MEDIUM,Temperature below safe limits
+humidity,<,30,15m,CMD,Low Humidity,MEDIUM,Humidity too low for comfort
+humidity,>,70,1h,CMD,High Humidity,MEDIUM,Humidity above recommended level
+pressure,<,95,30s,CMD,Low Pressure,CRITICAL,Pressure drop detected in Command module
+vocLevel,>,1.0,1h,CMD,High VOC,MEDIUM,Volatile organic compounds elevated
+pmLevel,>,25,1h,CMD,High PM,MEDIUM,Particulate matter elevated
+coLevel,>,0.01,1m,CMD,CO Detected,CRITICAL,Carbon monoxide detected
+o2Level,<,19.5,2m,LAB,Critical Low O2,CRITICAL,Oxygen level critically low
+o2Level,<,20.0,5m,LAB,Low O2,HIGH,Oxygen level below preferred range
+co2Level,>,0.08,5m,LAB,High CO2,CRITICAL,Carbon dioxide fraction above safe limit
 temperature,>,28,10m,LAB,High Temperature,MEDIUM,Temperature exceeds safe limits
+temperature,<,18,10m,LAB,Low Temperature,MEDIUM,Temperature below safe limits
 humidity,<,30,15m,LAB,Low Humidity,MEDIUM,Humidity too low for comfort
-pressure,<,95,30s,LAB,Low Pressure,CRITICAL,Pressure drop detected
-vocLevel,>,50,1h,LAB,High VOC,MEDIUM,Volatile compounds elevated
-o2Level,<,19.5,2m,HABITAT,Low O2,HIGH,Oxygen level critically low in habitat
-co2Level,>,1000,5m,HABITAT,High CO2,HIGH,Carbon dioxide level too high in habitat
-temperature,>,30,10m,HABITAT,High Temperature,MEDIUM,Temperature exceeds comfort zone in habitat
-humidity,>,80,6h,HABITAT,High Humidity,MEDIUM,High humidity detected in habitat
-coLevel,>,10,1m,HABITAT,CO Detected,CRITICAL,Carbon monoxide detected
-pressure,<,98,1m,COMMAND,Low Pressure,HIGH,Low pressure in command module
+humidity,>,70,6h,LAB,High Humidity,MEDIUM,High humidity detected in lab
+pressure,<,95,1m,LAB,Low Pressure,HIGH,Pressure drop detected in lab
+vocLevel,>,1.0,1h,LAB,High VOC,MEDIUM,Volatile compounds elevated in lab
+pmLevel,>,25,1h,LAB,High PM,MEDIUM,Particulate matter elevated
+coLevel,>,0.01,1m,LAB,CO Detected,CRITICAL,Carbon monoxide detected
+o2Level,<,19.5,2m,COMM,Critical Low O2,CRITICAL,Oxygen level critically low in Communications
+o2Level,<,20.0,5m,COMM,Low O2,HIGH,Oxygen level below preferred range in Communications
+co2Level,>,0.08,5m,COMM,High CO2,CRITICAL,Carbon dioxide fraction above safe limit in Communications
+temperature,>,28,10m,COMM,High Temperature,MEDIUM,Temperature exceeds safe limits
+temperature,<,18,10m,COMM,Low Temperature,MEDIUM,Temperature below safe limits
+humidity,<,30,15m,COMM,Low Humidity,MEDIUM,Humidity too low for comfort
+humidity,>,70,6h,COMM,High Humidity,MEDIUM,High humidity detected in Communications
+pressure,<,95,1m,COMM,Low Pressure,HIGH,Low pressure in communications module
+vocLevel,>,1.0,1h,COMM,High VOC,MEDIUM,Volatile compounds elevated
+pmLevel,>,25,1h,COMM,High PM,MEDIUM,Particulate matter elevated
+coLevel,>,0.01,1m,COMM,CO Detected,CRITICAL,Carbon monoxide detected in communications

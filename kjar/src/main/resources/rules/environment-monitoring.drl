@@ -9,6 +9,7 @@ import com.ftn.sbnz.model.models.MoistureInvestigation;
 import com.ftn.sbnz.model.models.WaterRecycling;
 import com.ftn.sbnz.model.models.VentilationStatus;
 import com.ftn.sbnz.model.enums.Module;
+import com.ftn.sbnz.model.models.ModuleLink;
 
 // CEP Rule: Sliding 6-hour window for humidity trend detection
 rule "Condensation detection - 6 hour sliding humidity trend - update existing WALLS"
@@ -176,120 +177,41 @@ when
     end
 
 
-query isMoistureSourceIn(String moduleId, String hypothesis)
-    (
-        // H1: Water recycling degraded + condensation on water lines
-        eval("H1".equals(hypothesis))
-        and WaterRecycling( wrModule : moduleID, degraded == true )
-        and CondensationData( cdModule : moduleID, location == CondensationLocation.WATER_LINES )
-        and Finding( type == "Condensation detected on WATER_LINES", moduleId == moduleId )
-        and eval(wrModule.equals(moduleId) && cdModule.equals(moduleId))
-    )
+// Recursive query with visited list to avoid infinite module cycles.
+// Call from Java with third parameter = null (visited list starts empty).
+// Backward chaining query (Location-style) without explicit visited list.
+// Traverses upstream via ModuleLink( from, to ) facts until a hypothesis base condition is satisfied.
+// Seed ModuleLink graph in Java (e.g., CMD->LAB, LAB->COMM, COMM->CMD) so recursion reaches all modules.
+query findMoistureSource( String hypothesis, String mod )
+        (
+            // H1 base: water recycling degraded + condensation + finding on WATER_LINES
+            eval("H1".equals(hypothesis))
+            and WaterRecycling( moduleID == mod, degraded == true )
+            and CondensationData( moduleID == mod, location == CondensationLocation.WATER_LINES )
+            and Finding( type == "Condensation detected on WATER_LINES", moduleId == mod )
+        )
     or
-    (
-        // H2: Ventilation degraded + condensation near dew point on walls
-        eval("H2".equals(hypothesis))
-        and VentilationStatus( vsModule : moduleID, degraded == true )
-        and Environment( envModule : moduleID, dewPoint : dewPoint )
-        and CondensationData( cdModule2 : moduleID, location == CondensationLocation.WALLS, surfaceTemp : surfaceTemperature )
-        and Finding( type == "Condensation detected on WALLS", moduleId == moduleId )
-        and eval(vsModule.equals(moduleId) && envModule.equals(moduleId) && cdModule2.equals(moduleId) && surfaceTemp <= (dewPoint + 2.0))
-    )
+        (
+            // H2 base: ventilation degraded + walls condensation near dew point
+            eval("H2".equals(hypothesis))
+            and VentilationStatus( moduleID == mod, degraded == true )
+            and Environment( moduleID == mod, $dewPoint : dewPoint )
+            and CondensationData( moduleID == mod, location == CondensationLocation.WALLS, $surfaceTemp : surfaceTemperature )
+            and Finding( type == "Condensation detected on WALLS", moduleId == mod )
+            and eval($surfaceTemp <= ($dewPoint + 2.0))
+        )
     or
-    (
-        // H3: Thermal bridge (cold panels)
-        eval("H3".equals(hypothesis))
-        and Environment( ambModule : moduleID, ambient : temperature )
-        and CondensationData( cdModule3 : moduleID, location == CondensationLocation.PANELS, surfaceTemp2 : surfaceTemperature )
-        and Finding( type == "Condensation detected on PANELS", moduleId == moduleId )
-        and eval(ambModule.equals(moduleId) && cdModule3.equals(moduleId) && surfaceTemp2 < (ambient - 5.0))
-    )
-    // recursion removed: investigation logic advances modules instead
-end
-
-// Investigation agenda for moisture sources
-// Rules below run when Java focuses the "investigate.moisture" agenda-group.
-
-rule "Investigate H1 - Water recycling"
-    agenda-group "investigate.moisture"
-    salience 300
-when
-    $mi : MoistureInvestigation( $mod : currentModuleID, investigationComplete == false, sourceFound == false )
-    isMoistureSourceIn( moduleId: $mod, hypothesis: "H1" )
-then
-    $mi.addTestedModule($mod);
-    $mi.setSourceFound(true);
-    $mi.setConfirmedHypothesis("H1");
-    $mi.setResult("Water recycling degraded in module " + $mod);
-    $mi.setInvestigationComplete(true);
-    update($mi);
-    Finding f = new Finding("Moisture source identified", $mod, "H1 matched: Water recycling degraded", "HIGH");
-    insert(f);
-end
-
-rule "Investigate H2 - Ventilation"
-    agenda-group "investigate.moisture"
-    salience 200
-when
-    $mi : MoistureInvestigation( $mod : currentModuleID, investigationComplete == false, sourceFound == false )
-    isMoistureSourceIn( moduleId: $mod, hypothesis: "H2" )
-then
-    $mi.addTestedModule($mod);
-    $mi.setSourceFound(true);
-    $mi.setConfirmedHypothesis("H2");
-    $mi.setResult("Ventilation degraded near dew point in module " + $mod);
-    $mi.setInvestigationComplete(true);
-    update($mi);
-    Finding f = new Finding("Moisture source identified", $mod, "H2 matched: Ventilation degraded", "HIGH");
-    insert(f);
-end
-
-rule "Investigate H3 - Thermal bridge"
-    agenda-group "investigate.moisture"
-    salience 100
-when
-    $mi : MoistureInvestigation( $mod : currentModuleID, investigationComplete == false, sourceFound == false )
-    isMoistureSourceIn( moduleId: $mod, hypothesis: "H3" )
-    not Finding( type == "Moisture source identified", moduleId == $mod )
-then
-    $mi.addTestedModule($mod);
-    $mi.setSourceFound(true);
-    $mi.setConfirmedHypothesis("H3");
-    $mi.setResult("Thermal bridge / cold panels in module " + $mod);
-    $mi.setInvestigationComplete(true);
-    update($mi);
-    Finding f = new Finding("Moisture source identified", $mod, "H3 matched: Thermal bridge", "HIGH");
-    insert(f);
-end
-
-// If none of the hypotheses matched for the current module, advance to the next untested module
-rule "Advance investigation to next module"
-    agenda-group "investigate.moisture"
-    salience 50
-when
-    $mi : MoistureInvestigation( $mod : currentModuleID, investigationComplete == false, sourceFound == false, $testedModules : testedModules )
-    $next : String() from Module.getNextModuleId($mod, $testedModules)
-then
-    // mark current as tested and move to next
-    $mi.addTestedModule($mod);
-    $mi.setCurrentModuleID($next);
-    update($mi);
-end
-
-// If there is no next module to try, complete the investigation as not found
-rule "Investigation complete - no source found"
-    agenda-group "investigate.moisture"
-    salience 10
-when
-    $mi : MoistureInvestigation( $mod : currentModuleID, investigationComplete == false, sourceFound == false, $testedModules : testedModules )
-    eval(Module.getNextModuleId($mod, $testedModules) == null)
-then
-    $mi.addTestedModule($mod);
-    $mi.setInvestigationComplete(true);
-    $mi.setSourceFound(false);
-    $mi.setResult("No moisture source found after scanning all modules");
-    $mi.setCompletionTimestamp(System.currentTimeMillis());
-    update($mi);
-    Finding f = new Finding("Investigation complete - no source", $mi.getCurrentModuleID(), "No source found after scanning all modules", "LOW");
-    insert(f);
+        (
+            // H3 base: cold panels vs ambient (thermal bridge)
+            eval("H3".equals(hypothesis))
+            and Environment( moduleID == mod, $ambient : temperature )
+            and CondensationData( moduleID == mod, location == CondensationLocation.PANELS, $surfaceTemp2 : surfaceTemperature )
+            and Finding( type == "Condensation detected on PANELS", moduleId == mod )
+            and eval($surfaceTemp2 < ($ambient - 5.0))
+        )
+    or
+        (
+            ModuleLink( $prev, mod; )
+            and findMoistureSource( hypothesis, $prev; )
+        )
 end

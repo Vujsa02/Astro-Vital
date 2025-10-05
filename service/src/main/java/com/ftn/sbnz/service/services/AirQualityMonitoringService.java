@@ -15,6 +15,7 @@ import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Collections;
 
 @Service
 public class AirQualityMonitoringService {
@@ -130,6 +131,17 @@ public class AirQualityMonitoringService {
             Finding finding = (Finding) obj;
             if (!finding.isExpired()) {
                 allFindings.add(finding);
+            }
+        }
+
+        // Persist findings into FindingsService if not already present
+        for (Finding f : allFindings) {
+            try {
+                if (!findingsService.hasActiveFinding(f.getModuleId(), f.getType())) {
+                    findingsService.addFindings(f.getModuleId(), Collections.singletonList(f));
+                }
+            } catch (Exception ex) {
+                System.out.println("AirQualityMonitoringService: Failed to persist finding: " + ex.getMessage());
             }
         }
 

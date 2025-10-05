@@ -67,4 +67,71 @@ public class FindingsService {
       cleanupExpiredFindings(moduleId);
     }
   }
+
+  // Delete specific findings by type and moduleId
+  public synchronized boolean deleteFindingsByTypeAndModule(String type, String moduleId) {
+    String key = moduleId == null ? "global" : moduleId;
+    List<Finding> findings = store.getOrDefault(key, Collections.emptyList());
+
+    List<Finding> filteredFindings = findings.stream()
+        .filter(f -> !f.getType().equals(type))
+        .collect(java.util.stream.Collectors.toList());
+
+    boolean removed = filteredFindings.size() != findings.size();
+
+    if (removed) {
+      if (filteredFindings.isEmpty()) {
+        store.remove(key);
+      } else {
+        store.put(key, filteredFindings);
+      }
+      System.out.println("FindingsService: Deleted findings of type '" + type +
+          "' for module " + moduleId);
+    }
+
+    return removed;
+  }
+
+  // Delete multiple findings by their type and moduleId
+  public synchronized int deleteMultipleFindings(List<FindingIdentifier> identifiers) {
+    int deletedCount = 0;
+
+    for (FindingIdentifier identifier : identifiers) {
+      if (deleteFindingsByTypeAndModule(identifier.getType(), identifier.getModuleId())) {
+        deletedCount++;
+      }
+    }
+
+    return deletedCount;
+  }
+
+  // Helper class for finding identification
+  public static class FindingIdentifier {
+    private String type;
+    private String moduleId;
+
+    public FindingIdentifier() {
+    }
+
+    public FindingIdentifier(String type, String moduleId) {
+      this.type = type;
+      this.moduleId = moduleId;
+    }
+
+    public String getType() {
+      return type;
+    }
+
+    public void setType(String type) {
+      this.type = type;
+    }
+
+    public String getModuleId() {
+      return moduleId;
+    }
+
+    public void setModuleId(String moduleId) {
+      this.moduleId = moduleId;
+    }
+  }
 }

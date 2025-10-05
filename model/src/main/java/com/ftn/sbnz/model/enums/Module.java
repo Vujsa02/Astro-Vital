@@ -64,4 +64,17 @@ public enum Module {
 
         return null; // All modules tested
     }
+
+    // Return a new list that is a copy of testedModules with moduleId appended (if
+    // not already present)
+    public static java.util.List<String> withAdded(java.util.List<String> testedModules, String moduleId) {
+        java.util.List<String> copy = new java.util.ArrayList<>();
+        if (testedModules != null) {
+            copy.addAll(testedModules);
+        }
+        if (moduleId != null && !copy.contains(moduleId)) {
+            copy.add(moduleId);
+        }
+        return copy;
+    }
 }

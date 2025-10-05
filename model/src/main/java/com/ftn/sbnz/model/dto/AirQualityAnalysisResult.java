@@ -4,7 +4,7 @@ import com.ftn.sbnz.model.models.Finding;
 import java.util.List;
 
 public class AirQualityAnalysisResult {
-    private List<Finding> episodicContaminationFindings;
+    private List<Finding> findings;
     private int totalEpisodes;
     private int rulesFired;
     private String status;
@@ -12,20 +12,20 @@ public class AirQualityAnalysisResult {
     public AirQualityAnalysisResult() {
     }
 
-    public AirQualityAnalysisResult(List<Finding> episodicContaminationFindings, int totalEpisodes, int rulesFired,
+    public AirQualityAnalysisResult(List<Finding> findings, int totalEpisodes, int rulesFired,
             String status) {
-        this.episodicContaminationFindings = episodicContaminationFindings;
+        this.findings = findings;
         this.totalEpisodes = totalEpisodes;
         this.rulesFired = rulesFired;
         this.status = status;
     }
 
-    public List<Finding> getEpisodicContaminationFindings() {
-        return episodicContaminationFindings;
+    public List<Finding> getfindings() {
+        return findings;
     }
 
-    public void setEpisodicContaminationFindings(List<Finding> episodicContaminationFindings) {
-        this.episodicContaminationFindings = episodicContaminationFindings;
+    public void setfindings(List<Finding> findings) {
+        this.findings = findings;
     }
 
     public int getTotalEpisodes() {
@@ -55,7 +55,7 @@ public class AirQualityAnalysisResult {
     @Override
     public String toString() {
         return "AirQualityAnalysisResult{" +
-                "episodicContaminationFindings=" + episodicContaminationFindings +
+                "findings=" + findings +
                 ", totalEpisodes=" + totalEpisodes +
                 ", rulesFired=" + rulesFired +
                 ", status='" + status + '\'' +

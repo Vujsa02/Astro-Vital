@@ -31,14 +31,5 @@ public class HealthMetricsController {
         request.getCrewSymptoms(),
         request.getVentilationStatus());
   }
-
-  @GetMapping("/findings")
-  public Map<String, List<Finding>> getAllFindings() {
-    return findingsService.getAllFindings();
-  }
-
-  @GetMapping("/findings/{moduleId}")
-  public List<Finding> getModuleFindings(@PathVariable String moduleId) {
-    return findingsService.getFindings(moduleId);
-  }
+  // findings endpoints have been moved to FindingsController
 }
